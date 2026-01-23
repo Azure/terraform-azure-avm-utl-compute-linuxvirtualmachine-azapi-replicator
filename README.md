@@ -601,7 +601,7 @@ The following outputs are exported:
 
 ### <a name="output_azapi_header"></a> [azapi\_header](#output\_azapi\_header)
 
-Description: Post-operation outputs (add as needed by Type 5 tasks) output "post\_creation0" { value = local.post\_creation0 } output "post\_creation0\_sensitive\_body" { value = local.post\_creation0\_sensitive\_body; sensitive = true } output "post\_update1" { value = local.post\_update1 } output "post\_update1\_sensitive\_body" { value = local.post\_update1\_sensitive\_body; sensitive = true } output "post\_update2" { value = local.post\_update2 } output "post\_update2\_sensitive\_body" { value = local.post\_update2\_sensitive\_body; sensitive = true }
+Description: n/a
 
 ### <a name="output_body"></a> [body](#output\_body)
 
