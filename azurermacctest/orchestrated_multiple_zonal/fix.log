@@ -1,0 +1,15 @@
+Test Case: orchestrated_multiple_zonal
+================================================================================
+
+Initial Error:
+Attempt to get attribute from null value - identity.value.type
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The dynamic identity block is being iterated when identity is null. The can() function is checking if the identity attribute exists, but doesn't filter out null values.
+- Fix Method: Change the for_each condition to check if identity is not null: can(module.replicator.azapi_header.identity) && module.replicator.azapi_header.identity != null
+- Changes Made: Modified line 48 in azapi.tf
+- Result: Success - Plan now shows acceptable drift patterns (AzAPI resource attributes and body structure changes)
+
+Final Result: Fix successful

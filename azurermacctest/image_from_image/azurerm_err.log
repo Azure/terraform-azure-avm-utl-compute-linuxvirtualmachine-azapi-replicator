@@ -1,0 +1,37 @@
+Test Case: image_from_image
+================================================================================
+
+Test Status: INVALID
+
+Step Failed: Step 2 - Baseline Validation (terraform apply)
+
+Error Message:
+Error: creating/updating Image (Subscription: "f7a632a5-49db-4c5e-9828-cd62cb753971"
+Resource Group Name: "acctestRG-651660"
+Image Name: "capture"): performing CreateOrUpdate: unexpected status 409 (409 Conflict) with error: OperationNotAllowed: The operation 'Create Image' requires the Virtual Machine 'acctestsourceVM-651660' to be Generalized.
+
+Root Cause Analysis:
+This test case attempts to create an Azure Image resource from a source VM using the azurerm_image resource with source_virtual_machine_id. However, Azure requires the source VM to be in a "Generalized" state before an image can be captured from it.
+
+The generalization process requires running the following steps on the VM:
+1. SSH into the VM
+2. Run: sudo waagent -deprovision+user -force
+3. Deallocate the VM: az vm deallocate
+4. Mark as generalized: az vm generalize
+
+This test case cannot be executed in a fully automated Terraform-only workflow because:
+- Terraform has no built-in mechanism to generalize a VM
+- Generalization requires executing commands inside the VM (via provisioners or external scripts)
+- The original AzureRM provider acceptance tests likely use test harness functionality to handle VM generalization that is not present in pure Terraform configurations
+
+Conclusion:
+This test case is INVALID for automated testing without additional provisioner setup or external scripting. The test configuration extracted from the provider's acceptance tests is incomplete for standalone execution.
+
+Recommendation:
+Skip this test case or modify it to use a pre-generalized image source instead of attempting to create an image from a running VM.
+
+Failed Command:
+cd azurermacctest\image_from_image; terraform apply -auto-approve -input=false
+
+Cleanup Status:
+Proceeding with cleanup (terraform destroy)

@@ -1,0 +1,7 @@
+# No azurerm_linux_virtual_machine resource exists in this test case.
+# This is a template-only test case used to provide infrastructure
+# (resource group, vnet, subnet, network interface) for OS disk import tests.
+# It's used as an intermediate step to remove a VM while keeping the infrastructure.
+#
+# Therefore, there is no module call or azapi_resource to create.
+# The main.tf file contains only supporting infrastructure resources.

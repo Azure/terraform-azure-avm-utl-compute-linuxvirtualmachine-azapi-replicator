@@ -1,0 +1,31 @@
+Test Case: disk_os_ephemeral_spot
+================================================================================
+
+Step 2 Failed: Baseline AzureRM Configuration Validation
+
+Initial Error (eastus with Standard_F2s_v2):
+Error: creating Linux Virtual Machine: performing CreateOrUpdate: unexpected status 409 (409 Conflict) with error: SkuNotAvailable: The requested VM size for resource 'Following SKUs have failed for Capacity Restrictions: Standard_F2s_v2' is currently not available in location 'eastus'. Please try another size or deploy to a different location or different zone.
+
+Attempted Fixes:
+
+Attempt 1: Changed location to westus2
+- Result: Same SkuNotAvailable error for Standard_F2s_v2 in westus2
+
+Attempt 2: Changed VM size to Standard_DS2_v2 in westus2
+- Result: Same SkuNotAvailable error for Standard_DS2_v2 in westus2
+
+Attempt 3: Changed location to southcentralus with Standard_DS2_v2
+- Result: Same SkuNotAvailable error for Standard_DS2_v2 in southcentralus
+
+Root Cause Analysis:
+This test case creates a Spot VM with ephemeral disk (diff_disk_settings). Spot VMs have capacity restrictions and are subject to Azure capacity availability. The combination of:
+1. Priority = "Spot"
+2. Ephemeral disk configuration (diff_disk_settings with option = "Local")
+3. Current Azure capacity constraints
+
+Results in SkuNotAvailable errors across multiple regions (eastus, westus2, southcentralus) and VM sizes (Standard_F2s_v2, Standard_DS2_v2).
+
+Conclusion:
+This is an Azure platform capacity constraint, not a test configuration or module implementation issue. The test case cannot be validated at this time due to lack of available Spot VM capacity with ephemeral disk support in the attempted regions.
+
+Test Status: INVALID - Azure capacity constraint prevents baseline validation

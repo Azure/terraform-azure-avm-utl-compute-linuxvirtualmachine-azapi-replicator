@@ -1,0 +1,29 @@
+Test Case: other_encryption_at_host_enabled
+================================================================================
+
+Initial Error:
+Error: Attempt to get attribute from null value
+│   on azapi.tf line 54, in resource "azapi_resource" "this":
+│   54:       type         = identity.value.type
+│     ├────────────────
+│     │ identity.value is null
+│
+│ This value is null, so it does not have any attributes.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The dynamic "identity" block uses `can()` function which evaluates to true even when the value is null, causing it to iterate with a null value
+- Fix Method: Add explicit null check in addition to can() - change condition from `can(module.replicator.azapi_header.identity) ? [...]` to `can(module.replicator.azapi_header.identity) && module.replicator.azapi_header.identity != null ? [...]`
+- Changes Made: Modified azapi.tf line 52 to include null check
+- Result: Success - terraform plan now shows drift that needs to be evaluated
+
+Drift Analysis:
+All detected drifts match acceptable patterns:
+1. AzAPI resource-level attributes (ignore_null_property, locks, replace_triggers_external_values, sensitive_body_version, output, type, timeouts) - Pattern #1 ✅
+2. Body structure changes - All removed/added fields are Optional+Computed in AzureRM provider (patchSettings, requireGuestProvisionSignal, secrets, storageUri default, etc.) - Pattern #2 ✅
+
+Conclusion: Drift is acceptable. Proceeding to apply one-time update.
+
+Final Result: Fix successful
+

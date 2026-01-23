@@ -1,0 +1,25 @@
+Test Case: identity_user_assigned_removed
+================================================================================
+
+Initial Error:
+╷
+│ Error: Missing required argument
+│
+│   on azapi.tf line 1, in module "replicator":
+│    1: module "replicator" {
+│
+│ The argument "resource_group_id" is required, but no definition was found.
+╵
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The module call is missing the required resource_group_id parameter. Also, the identity_ids extraction in the dynamic identity block is using the wrong pattern.
+- Fix Method: Add resource_group_id parameter and fix identity_ids extraction to use keys(identity.value.userAssignedIdentities) pattern
+- Changes Made:
+  1. Add line 5: resource_group_id = azurerm_resource_group.test.id
+  2. Change line 58: identity_ids = try(identity.value.identity_ids, null) -> identity_ids = try(keys(identity.value.userAssignedIdentities), null)
+- Result: Success - plan now runs and shows acceptable drift only (AzAPI metadata changes, API version change, and removal of Optional+Computed fields)
+
+Final Result: Fix successful
+

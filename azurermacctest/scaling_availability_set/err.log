@@ -1,0 +1,44 @@
+Test Case: scaling_availability_set
+================================================================================
+
+Step 3 Failed: Perpetual drift detected after apply
+
+Initial Drift After State Migration:
+- AzAPI resource-level attributes changed (acceptable)
+- Body structure changes for computed values (acceptable)
+
+Applied Changes:
+- terraform apply succeeded
+- Resources updated: 2 added, 1 changed, 0 destroyed
+
+Second Plan Result:
+- Plan still shows 1 resource to change
+- NOT idempotent (expected: No changes)
+
+Specific Drift Detected:
+  ~ body.properties.availabilitySet.id 
+    FROM: "/subscriptions/.../Microsoft.Compute/availabilitySets/ACCTESTAVSET-370002" (uppercase)
+    TO: "/subscriptions/.../Microsoft.Compute/availabilitySets/acctestavset-370002" (lowercase)
+
+Root Cause Analysis:
+This is a case sensitivity issue with availability_set_id. The module is passing the 
+correct lowercase ID from azurerm_availability_set.test.id, but Azure's API is returning 
+the availability set name in uppercase in the response. This causes Terraform to detect 
+drift on every plan because the input (lowercase) doesn't match the output (uppercase).
+
+This is NOT an acceptable drift pattern according to acceptable_drift_patterns.md:
+- It's not an AzAPI resource-level attribute (Section 1)
+- It's not a removed default/computed value (Section 2)
+- It's an explicitly configured value showing a different value in subsequent plans
+
+This indicates a module implementation error - the module should handle case-insensitive
+resource ID references or normalize the casing to prevent perpetual drift.
+
+Conclusion:
+The test has FAILED at Step 3 due to perpetual configuration drift. The module needs 
+to be fixed to handle case-insensitive Azure resource IDs for availability sets.
+
+Next Steps for Module Authors:
+1. Investigate why Azure returns uppercase availability set names in responses
+2. Implement case-insensitive comparison or ID normalization in the module
+3. Consider using ignore_changes for case-insensitive fields if Azure behavior is inconsistent

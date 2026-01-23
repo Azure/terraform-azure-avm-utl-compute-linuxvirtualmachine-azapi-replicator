@@ -1,0 +1,43 @@
+Test Case: disk_os_ephemeral_resource_disk
+================================================================================
+
+Step 5 failed during fresh AzAPI deployment
+
+Error during terraform apply:
+╷
+│ Error: Failed to create/update resource
+│
+│   with azapi_resource.this,
+│   on azapi.tf line 39, in resource "azapi_resource" "this":
+│   39: resource "azapi_resource" "this" {
+│
+│ creating/updating Resource: (ResourceId
+│ "/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-843010/providers/Microsoft.Compute/virtualMachines/acctestVM-843010"
+│ / Api Version "2024-03-01"): PUT
+│ https://management.azure.com/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-843010/providers/Microsoft.Compute/virtualMachines/acctestVM-843010
+│ --------------------------------------------------------------------------------
+│ RESPONSE 400: 400 Bad Request
+│ ERROR CODE: InvalidParameter
+│ --------------------------------------------------------------------------------
+│ {
+│   "error": {
+│     "code": "InvalidParameter",
+│     "message": "The value of parameter imageReference.publisher is invalid.",
+│     "target": "imageReference.publisher"
+│   }
+│ }
+│ --------------------------------------------------------------------------------
+│
+╵
+
+Problem Analysis:
+The Azure API returned a 400 Bad Request error indicating that imageReference.publisher value is invalid. The source_image_reference input appears correct:
+  publisher = "Canonical"
+  offer     = "0001-com-ubuntu-server-jammy"
+  sku       = "22_04-lts"
+  version   = "latest"
+
+This is a module implementation error - the module is not correctly transforming the source_image_reference into the body.properties.storageProfile.imageReference structure that Azure API expects. This error occurred during fresh deployment (Step 5), not during state migration.
+
+Conclusion:
+This is a module implementation bug that cannot be fixed by modifying azapi.tf configuration. The module's internal logic for constructing the storageProfile.imageReference is faulty.

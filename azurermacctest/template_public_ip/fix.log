@@ -1,0 +1,28 @@
+Test Case: template_public_ip
+================================================================================
+
+Initial Error:
+Error: Attempt to get attribute from null value
+  on azapi.tf line 47, in resource "azapi_resource" "this":
+  47:       type         = identity.value.type
+    ├────────────────
+    │ identity.value is null
+This value is null, so it does not have any attributes.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: Error "Attempt to get attribute from null value" in dynamic identity block at line 47. The for_each condition uses `can(module.replicator.azapi_header.identity)` which returns true even when the value is null, resulting in [null] being iterated.
+- Fix Method: Update the identity dynamic block to match working pattern from previous successful test cases. Use `!= null` check instead of `can()`, and properly handle userAssignedIdentities.
+- Changes Made:
+  * Line 45: Changed `can(module.replicator.azapi_header.identity)` to `module.replicator.azapi_header.identity != null`
+  * Line 48: Changed `try(identity.value.identity_ids, null)` to `try(identity.value.userAssignedIdentities, null) != null ? keys(identity.value.userAssignedIdentities) : null`
+- Result: Success! Plan now runs without errors and shows acceptable drift.
+
+Final Result for Step 3: Fix successful
+
+Drift Analysis:
+All detected drifts are acceptable per acceptable_drift_patterns.md:
+- ignore_null_property, locks, replace_triggers_external_values, sensitive_body_version, output, type, timeouts changes are all acceptable AzAPI resource-level attributes
+- Body changes (removed default values like patchSettings, requireGuestProvisionSignal, etc.) are acceptable as they are Azure API response fields with Optional+Computed attributes
+

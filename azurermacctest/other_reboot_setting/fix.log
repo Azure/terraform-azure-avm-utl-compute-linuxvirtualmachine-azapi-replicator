@@ -1,0 +1,32 @@
+Test Case: other_reboot_setting
+================================================================================
+
+Initial Error:
+Error: Missing required argument
+  on azapi.tf line 1, in module "replicator":
+   1: module "replicator" {
+The argument "resource_group_id" is required, but no definition was found.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The module requires `resource_group_id` parameter but it's missing from the module call
+- Fix Method: Add `resource_group_id = azurerm_resource_group.test.id` to the module parameters
+- Changes Made: Added resource_group_id parameter to module block in azapi.tf
+- Result: Fix successful, new error appeared
+
+New Error:
+Error: Attempt to get attribute from null value
+  on azapi.tf line 54, in resource "azapi_resource" "this":
+  54:       type         = identity.value.type
+This value is null, so it does not have any attributes.
+
+Attempt 2:
+- Problem Analysis: The dynamic identity block is trying to access attributes on a null value
+- Fix Method: Update the for_each condition to properly check if identity exists and is not null
+- Changes Made: Modified the identity dynamic block condition to check for non-null values using can(module.replicator.azapi_header.identity.type)
+- Result: Fix successful
+
+Final Result: Terraform plan succeeded with acceptable drifts detected (resource-level attribute changes and body computed field removals). These match the acceptable drift patterns in acceptable_drift_patterns.md. Proceeding with apply to verify idempotency.
+
+

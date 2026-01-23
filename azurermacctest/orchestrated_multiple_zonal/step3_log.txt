@@ -1,0 +1,601 @@
+=== Step 3: State Migration ===
+[0m[1mInitializing the backend...[0m
+[0m[1mInitializing modules...[0m
+- replicator in ..\..
+[0m[1mInitializing provider plugins...[0m
+- Finding hashicorp/azurerm versions matching "~> 4.0"...
+- Finding azure/azapi versions matching "~> 2.0, ~> 2.4"...
+- Finding hashicorp/random versions matching "~> 3.0, ~> 3.5"...
+- Finding azure/modtm versions matching "~> 0.3"...
+- Installing hashicorp/random v3.7.2...
+- Installed hashicorp/random v3.7.2 (signed by HashiCorp)
+- Installing azure/modtm v0.3.5...
+- Installed azure/modtm v0.3.5 (signed by a HashiCorp partner, key ID [0m[1m6F0B91BDE98478CF[0m[0m)
+- Installing hashicorp/azurerm v4.57.0...
+- Installed hashicorp/azurerm v4.57.0 (signed by HashiCorp)
+- Installing azure/azapi v2.8.0...
+- Installed azure/azapi v2.8.0 (signed by a HashiCorp partner, key ID [0m[1m6F0B91BDE98478CF[0m[0m)
+Partner and community providers are signed by their developers.
+If you'd like to know more about provider signing, you can read about it here:
+https://developer.hashicorp.com/terraform/cli/plugins/signing
+Terraform has created a lock file [1m.terraform.lock.hcl[0m to record the provider
+selections it made above. Include this file in your version control repository
+so that Terraform can guarantee to make the same selections by default when
+you run "terraform init" in the future.[0m
+
+[0m[1m[32mTerraform has been successfully initialized![0m[32m[0m
+[0m[32m
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.[0m
+[0m[1mmodule.replicator.data.modtm_module_source.telemetry[0]: Reading...[0m[0m
+[0m[1mmodule.replicator.data.modtm_module_source.telemetry[0]: Read complete after 0s[0m
+[0m[1mrandom_integer.number: Refreshing state... [id=146466][0m
+[0m[1mrandom_string.name: Refreshing state... [id=qxom91ct][0m
+[0m[1mmodule.replicator.data.azapi_client_config.telemetry[0]: Reading...[0m[0m
+[0m[1mmodule.replicator.data.azapi_client_config.telemetry[0]: Read complete after 0s [id=clientConfigs/subscriptionId=f7a632a5-49db-4c5e-9828-cd62cb753971;tenantId=fc2bf966-a984-438c-93b7-bc5a06fe7f0d][0m
+[0m[1mazurerm_resource_group.test: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466][0m
+[0m[1mazurerm_virtual_network.test: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Network/virtualNetworks/acctestnw-146466][0m
+[0m[1mazurerm_orchestrated_virtual_machine_scale_set.test: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachineScaleSets/acctestVMO-146466][0m
+[0m[1mmodule.replicator.data.azapi_resource.existing: Reading...[0m[0m
+[0m[1mmodule.replicator.data.azapi_resource.existing: Read complete after 0s [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachines/acctestVM1-146466][0m
+[0m[1mazurerm_subnet.test: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Network/virtualNetworks/acctestnw-146466/subnets/internal][0m
+[0m[1mazurerm_network_interface.second: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Network/networkInterfaces/acctestnic2-146466][0m
+[0m[1mazurerm_network_interface.first: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Network/networkInterfaces/acctestnic1-146466][0m
+[0m[1mazurerm_linux_virtual_machine.another: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachines/acctestVM2-146466][0m
+[0m[1mazapi_resource.this: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachines/acctestVM1-146466][0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [32m+[0m create[0m
+
+Terraform planned the following actions, but then encountered a problem:
+
+[1m  # module.replicator.modtm_telemetry.telemetry[0][0m will be created
+[0m  [32m+[0m[0m resource "modtm_telemetry" "telemetry" {
+      [32m+[0m[0m ephemeral_number = (known after apply)
+      [32m+[0m[0m id               = (known after apply)
+      [32m+[0m[0m nonce            = (known after apply)
+      [32m+[0m[0m tags             = {
+          [32m+[0m[0m "location"        = "eastus"
+          [32m+[0m[0m "module_source"   = "../.."
+          [32m+[0m[0m "module_version"  = [90mnull[0m[0m
+          [32m+[0m[0m "random_id"       = (known after apply)
+          [32m+[0m[0m "subscription_id" = "f7a632a5-49db-4c5e-9828-cd62cb753971"
+          [32m+[0m[0m "tenant_id"       = "fc2bf966-a984-438c-93b7-bc5a06fe7f0d"
+        }
+    }
+
+[1m  # module.replicator.random_uuid.telemetry[0][0m will be created
+[0m  [32m+[0m[0m resource "random_uuid" "telemetry" {
+      [32m+[0m[0m id     = (known after apply)
+      [32m+[0m[0m result = (known after apply)
+    }
+
+[1mPlan:[0m [0m2 to add, 0 to change, 0 to destroy.
+Γò╖
+Γöé Error: Attempt to get attribute from null value
+Γöé 
+Γöé   on azapi.tf line 50, in resource "azapi_resource" "this":
+Γöé   50:       type         = identity.value.type
+Γöé     Γö£ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+Γöé     Γöé identity.value is null
+Γöé 
+Γöé This value is null, so it does not have any attributes.
+Γò╡
+[0m[1mmodule.replicator.data.modtm_module_source.telemetry[0]: Reading...[0m[0m
+[0m[1mmodule.replicator.data.modtm_module_source.telemetry[0]: Read complete after 0s[0m
+[0m[1mrandom_integer.number: Refreshing state... [id=146466][0m
+[0m[1mrandom_string.name: Refreshing state... [id=qxom91ct][0m
+[0m[1mmodule.replicator.data.azapi_client_config.telemetry[0]: Reading...[0m[0m
+[0m[1mmodule.replicator.data.azapi_client_config.telemetry[0]: Read complete after 1s [id=clientConfigs/subscriptionId=f7a632a5-49db-4c5e-9828-cd62cb753971;tenantId=fc2bf966-a984-438c-93b7-bc5a06fe7f0d][0m
+[0m[1mazurerm_resource_group.test: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466][0m
+[0m[1mazurerm_virtual_network.test: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Network/virtualNetworks/acctestnw-146466][0m
+[0m[1mmodule.replicator.data.azapi_resource.existing: Reading...[0m[0m
+[0m[1mazurerm_orchestrated_virtual_machine_scale_set.test: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachineScaleSets/acctestVMO-146466][0m
+[0m[1mmodule.replicator.data.azapi_resource.existing: Read complete after 1s [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachines/acctestVM1-146466][0m
+[0m[1mazurerm_subnet.test: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Network/virtualNetworks/acctestnw-146466/subnets/internal][0m
+[0m[1mazurerm_network_interface.first: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Network/networkInterfaces/acctestnic1-146466][0m
+[0m[1mazurerm_network_interface.second: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Network/networkInterfaces/acctestnic2-146466][0m
+[0m[1mazurerm_linux_virtual_machine.another: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachines/acctestVM2-146466][0m
+[0m[1mazapi_resource.this: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachines/acctestVM1-146466][0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [32m+[0m create[0m
+  [33m~[0m update in-place[0m
+
+Terraform will perform the following actions:
+
+[1m  # azapi_resource.this[0m will be updated in-place
+  # [0m(moved from azurerm_linux_virtual_machine.test)
+[0m  [33m~[0m[0m resource "azapi_resource" "this" {
+      [33m~[0m[0m body                             = {
+          [32m+[0m[0m extendedLocation = [90mnull[0m[0m
+          [32m+[0m[0m plan             = [90mnull[0m[0m
+          [33m~[0m[0m properties       = {
+              [32m+[0m[0m availabilitySet         = [90mnull[0m[0m
+              [32m+[0m[0m capacityReservation     = [90mnull[0m[0m
+              [33m~[0m[0m diagnosticsProfile      = {
+                  [33m~[0m[0m bootDiagnostics = {
+                      [32m+[0m[0m storageUri = ""
+                        [90m# (1 unchanged attribute hidden)[0m[0m
+                    }
+                }
+              [32m+[0m[0m evictionPolicy          = [90mnull[0m[0m
+              [32m+[0m[0m host                    = [90mnull[0m[0m
+              [32m+[0m[0m hostGroup               = [90mnull[0m[0m
+              [32m+[0m[0m licenseType             = [90mnull[0m[0m
+              [33m~[0m[0m osProfile               = {
+                  [33m~[0m[0m linuxConfiguration          = {
+                      [31m-[0m[0m patchSettings                 = {
+                          [31m-[0m[0m assessmentMode = "ImageDefault"
+                          [31m-[0m[0m patchMode      = "ImageDefault"
+                        }
+                      [31m-[0m[0m ssh                           = {
+                          [31m-[0m[0m publicKeys = []
+                        }
+                        [90m# (2 unchanged attributes hidden)[0m[0m
+                    }
+                  [31m-[0m[0m requireGuestProvisionSignal = true
+                  [31m-[0m[0m secrets                     = []
+                    [90m# (3 unchanged attributes hidden)[0m[0m
+                }
+              [32m+[0m[0m proximityPlacementGroup = [90mnull[0m[0m
+              [32m+[0m[0m scheduledEventsProfile  = {
+                  [32m+[0m[0m osImageNotificationProfile   = {
+                      [32m+[0m[0m enable = false
+                    }
+                  [32m+[0m[0m terminateNotificationProfile = {
+                      [32m+[0m[0m enable = false
+                    }
+                }
+              [32m+[0m[0m securityProfile         = [90mnull[0m[0m
+              [33m~[0m[0m storageProfile          = {
+                  [33m~[0m[0m imageReference = {
+                      [31m-[0m[0m offer     = "0001-com-ubuntu-server-jammy"
+                      [31m-[0m[0m publisher = "Canonical"
+                        [90m# (2 unchanged attributes hidden)[0m[0m
+                    }
+                  [33m~[0m[0m osDisk         = {
+                      [31m-[0m[0m deleteOption            = "Detach"
+                      [32m+[0m[0m diffDiskSettings        = [90mnull[0m[0m
+                      [33m~[0m[0m diskSizeGB              = 30 [33m->[0m[0m [90mnull[0m[0m
+                      [33m~[0m[0m managedDisk             = {
+                          [31m-[0m[0m id                 = "/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/disks/acctestVM1-146466_OsDisk_1_d82b8a3b345d41129b0b011a952183a9"
+                            [90m# (1 unchanged attribute hidden)[0m[0m
+                        }
+                      [33m~[0m[0m name                    = "acctestVM1-146466_OsDisk_1_d82b8a3b345d41129b0b011a952183a9" [33m->[0m[0m [90mnull[0m[0m
+                      [33m~[0m[0m writeAcceleratorEnabled = false [33m->[0m[0m [90mnull[0m[0m
+                        [90m# (3 unchanged attributes hidden)[0m[0m
+                    }
+                    [90m# (1 unchanged attribute hidden)[0m[0m
+                }
+              [32m+[0m[0m userData                = [90mnull[0m[0m
+                [90m# (5 unchanged attributes hidden)[0m[0m
+            }
+            [90m# (1 unchanged attribute hidden)[0m[0m
+        }
+        id                               = "/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachines/acctestVM1-146466"
+      [33m~[0m[0m ignore_null_property             = false [33m->[0m[0m true
+      [32m+[0m[0m locks                            = []
+        name                             = "acctestVM1-146466"
+      [33m~[0m[0m output                           = {
+          [31m-[0m[0m id         = "/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachines/acctestVM1-146466"
+          [31m-[0m[0m properties = {
+              [31m-[0m[0m networkProfile    = {
+                  [31m-[0m[0m networkInterfaces = [
+                      [31m-[0m[0m {},
+                    ]
+                }
+              [31m-[0m[0m provisioningState = "Succeeded"
+              [31m-[0m[0m storageProfile    = {
+                  [31m-[0m[0m imageReference = {
+                      [31m-[0m[0m exactVersion = "22.04.202512181"
+                    }
+                }
+              [31m-[0m[0m timeCreated       = "2026-01-04T02:30:29.1890384+00:00"
+              [31m-[0m[0m vmId              = "9a9a2f93-f844-4916-aed5-a93ce68bf389"
+            }
+          [31m-[0m[0m type       = "Microsoft.Compute/virtualMachines"
+          [31m-[0m[0m zones      = [
+              [31m-[0m[0m "1",
+            ]
+        } -> (known after apply)
+      [32m+[0m[0m replace_triggers_external_values = {
+          [32m+[0m[0m admin_password_version                   = {
+              [32m+[0m[0m value = 1
+            }
+          [32m+[0m[0m admin_ssh_key                            = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m admin_username                           = {
+              [32m+[0m[0m value = "adminuser"
+            }
+          [32m+[0m[0m availability_set_id                      = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m computer_name                            = {
+              [32m+[0m[0m value = "acctestVM1-146466"
+            }
+          [32m+[0m[0m custom_data_version                      = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m disable_password_authentication          = {
+              [32m+[0m[0m value = false
+            }
+          [32m+[0m[0m edge_zone                                = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m eviction_policy                          = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m location                                 = {
+              [32m+[0m[0m value = "eastus"
+            }
+          [32m+[0m[0m name                                     = {
+              [32m+[0m[0m value = "acctestVM1-146466"
+            }
+          [32m+[0m[0m os_disk_diff_disk_settings_option        = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m os_disk_diff_disk_settings_placement     = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m os_disk_name                             = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m os_disk_secure_vm_disk_encryption_set_id = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m os_disk_security_encryption_type         = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m os_disk_storage_account_type             = {
+              [32m+[0m[0m value = "Standard_LRS"
+            }
+          [32m+[0m[0m plan                                     = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m priority                                 = {
+              [32m+[0m[0m value = "Regular"
+            }
+          [32m+[0m[0m provision_vm_agent                       = {
+              [32m+[0m[0m value = true
+            }
+          [32m+[0m[0m resource_group_id                        = {
+              [32m+[0m[0m value = "/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466"
+            }
+          [32m+[0m[0m source_image_id                          = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m source_image_reference                   = {
+              [32m+[0m[0m value = {
+                  [32m+[0m[0m offer     = "0001-com-ubuntu-server-jammy"
+                  [32m+[0m[0m publisher = "Canonical"
+                  [32m+[0m[0m sku       = "22_04-lts"
+                  [32m+[0m[0m version   = "latest"
+                }
+            }
+          [32m+[0m[0m vtpm_enabled                             = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m zone                                     = {
+              [32m+[0m[0m value = "1"
+            }
+        }
+      [32m+[0m[0m sensitive_body_version           = {
+          [32m+[0m[0m "properties.osProfile.adminPassword" = "1"
+          [32m+[0m[0m "properties.osProfile.customData"    = [90mnull[0m[0m
+        }
+      [33m~[0m[0m type                             = "Microsoft.Compute/virtualMachines@2025-04-01" [33m->[0m[0m "Microsoft.Compute/virtualMachines@2024-03-01"
+        [90m# (6 unchanged attributes hidden)[0m[0m
+
+      [32m+[0m[0m timeouts {
+          [32m+[0m[0m create = "45m"
+          [32m+[0m[0m delete = "45m"
+          [32m+[0m[0m read   = "5m"
+          [32m+[0m[0m update = "45m"
+        }
+    }
+
+[1m  # module.replicator.modtm_telemetry.telemetry[0][0m will be created
+[0m  [32m+[0m[0m resource "modtm_telemetry" "telemetry" {
+      [32m+[0m[0m ephemeral_number = (known after apply)
+      [32m+[0m[0m id               = (known after apply)
+      [32m+[0m[0m nonce            = (known after apply)
+      [32m+[0m[0m tags             = {
+          [32m+[0m[0m "location"        = "eastus"
+          [32m+[0m[0m "module_source"   = "../.."
+          [32m+[0m[0m "module_version"  = [90mnull[0m[0m
+          [32m+[0m[0m "random_id"       = (known after apply)
+          [32m+[0m[0m "subscription_id" = "f7a632a5-49db-4c5e-9828-cd62cb753971"
+          [32m+[0m[0m "tenant_id"       = "fc2bf966-a984-438c-93b7-bc5a06fe7f0d"
+        }
+    }
+
+[1m  # module.replicator.random_uuid.telemetry[0][0m will be created
+[0m  [32m+[0m[0m resource "random_uuid" "telemetry" {
+      [32m+[0m[0m id     = (known after apply)
+      [32m+[0m[0m result = (known after apply)
+    }
+
+[1mPlan:[0m [0m2 to add, 1 to change, 0 to destroy.
+[90m
+ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.
+[0m[1mmodule.replicator.data.modtm_module_source.telemetry[0]: Reading...[0m[0m
+[0m[1mmodule.replicator.data.modtm_module_source.telemetry[0]: Read complete after 0s[0m
+[0m[1mrandom_integer.number: Refreshing state... [id=146466][0m
+[0m[1mrandom_string.name: Refreshing state... [id=qxom91ct][0m
+[0m[1mmodule.replicator.data.azapi_client_config.telemetry[0]: Reading...[0m[0m
+[0m[1mmodule.replicator.data.azapi_client_config.telemetry[0]: Read complete after 1s [id=clientConfigs/subscriptionId=f7a632a5-49db-4c5e-9828-cd62cb753971;tenantId=fc2bf966-a984-438c-93b7-bc5a06fe7f0d][0m
+[0m[1mazurerm_resource_group.test: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466][0m
+[0m[1mazurerm_virtual_network.test: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Network/virtualNetworks/acctestnw-146466][0m
+[0m[1mmodule.replicator.data.azapi_resource.existing: Reading...[0m[0m
+[0m[1mazurerm_orchestrated_virtual_machine_scale_set.test: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachineScaleSets/acctestVMO-146466][0m
+[0m[1mazurerm_subnet.test: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Network/virtualNetworks/acctestnw-146466/subnets/internal][0m
+[0m[1mmodule.replicator.data.azapi_resource.existing: Read complete after 1s [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachines/acctestVM1-146466][0m
+[0m[1mazurerm_network_interface.second: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Network/networkInterfaces/acctestnic2-146466][0m
+[0m[1mazurerm_network_interface.first: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Network/networkInterfaces/acctestnic1-146466][0m
+[0m[1mazurerm_linux_virtual_machine.another: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachines/acctestVM2-146466][0m
+[0m[1mazapi_resource.this: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachines/acctestVM1-146466][0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [32m+[0m create[0m
+  [33m~[0m update in-place[0m
+
+Terraform will perform the following actions:
+
+[1m  # azapi_resource.this[0m will be updated in-place
+  # [0m(moved from azurerm_linux_virtual_machine.test)
+[0m  [33m~[0m[0m resource "azapi_resource" "this" {
+      [33m~[0m[0m body                             = {
+          [32m+[0m[0m extendedLocation = [90mnull[0m[0m
+          [32m+[0m[0m plan             = [90mnull[0m[0m
+          [33m~[0m[0m properties       = {
+              [32m+[0m[0m availabilitySet         = [90mnull[0m[0m
+              [32m+[0m[0m capacityReservation     = [90mnull[0m[0m
+              [33m~[0m[0m diagnosticsProfile      = {
+                  [33m~[0m[0m bootDiagnostics = {
+                      [32m+[0m[0m storageUri = ""
+                        [90m# (1 unchanged attribute hidden)[0m[0m
+                    }
+                }
+              [32m+[0m[0m evictionPolicy          = [90mnull[0m[0m
+              [32m+[0m[0m host                    = [90mnull[0m[0m
+              [32m+[0m[0m hostGroup               = [90mnull[0m[0m
+              [32m+[0m[0m licenseType             = [90mnull[0m[0m
+              [33m~[0m[0m osProfile               = {
+                  [33m~[0m[0m linuxConfiguration          = {
+                      [31m-[0m[0m patchSettings                 = {
+                          [31m-[0m[0m assessmentMode = "ImageDefault"
+                          [31m-[0m[0m patchMode      = "ImageDefault"
+                        }
+                      [31m-[0m[0m ssh                           = {
+                          [31m-[0m[0m publicKeys = []
+                        }
+                        [90m# (2 unchanged attributes hidden)[0m[0m
+                    }
+                  [31m-[0m[0m requireGuestProvisionSignal = true
+                  [31m-[0m[0m secrets                     = []
+                    [90m# (3 unchanged attributes hidden)[0m[0m
+                }
+              [32m+[0m[0m proximityPlacementGroup = [90mnull[0m[0m
+              [32m+[0m[0m scheduledEventsProfile  = {
+                  [32m+[0m[0m osImageNotificationProfile   = {
+                      [32m+[0m[0m enable = false
+                    }
+                  [32m+[0m[0m terminateNotificationProfile = {
+                      [32m+[0m[0m enable = false
+                    }
+                }
+              [32m+[0m[0m securityProfile         = [90mnull[0m[0m
+              [33m~[0m[0m storageProfile          = {
+                  [33m~[0m[0m imageReference = {
+                      [31m-[0m[0m offer     = "0001-com-ubuntu-server-jammy"
+                      [31m-[0m[0m publisher = "Canonical"
+                        [90m# (2 unchanged attributes hidden)[0m[0m
+                    }
+                  [33m~[0m[0m osDisk         = {
+                      [31m-[0m[0m deleteOption            = "Detach"
+                      [32m+[0m[0m diffDiskSettings        = [90mnull[0m[0m
+                      [33m~[0m[0m diskSizeGB              = 30 [33m->[0m[0m [90mnull[0m[0m
+                      [33m~[0m[0m managedDisk             = {
+                          [31m-[0m[0m id                 = "/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/disks/acctestVM1-146466_OsDisk_1_d82b8a3b345d41129b0b011a952183a9"
+                            [90m# (1 unchanged attribute hidden)[0m[0m
+                        }
+                      [33m~[0m[0m name                    = "acctestVM1-146466_OsDisk_1_d82b8a3b345d41129b0b011a952183a9" [33m->[0m[0m [90mnull[0m[0m
+                      [33m~[0m[0m writeAcceleratorEnabled = false [33m->[0m[0m [90mnull[0m[0m
+                        [90m# (3 unchanged attributes hidden)[0m[0m
+                    }
+                    [90m# (1 unchanged attribute hidden)[0m[0m
+                }
+              [32m+[0m[0m userData                = [90mnull[0m[0m
+                [90m# (5 unchanged attributes hidden)[0m[0m
+            }
+            [90m# (1 unchanged attribute hidden)[0m[0m
+        }
+        id                               = "/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachines/acctestVM1-146466"
+      [33m~[0m[0m ignore_null_property             = false [33m->[0m[0m true
+      [32m+[0m[0m locks                            = []
+        name                             = "acctestVM1-146466"
+      [33m~[0m[0m output                           = {
+          [31m-[0m[0m id         = "/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachines/acctestVM1-146466"
+          [31m-[0m[0m properties = {
+              [31m-[0m[0m networkProfile    = {
+                  [31m-[0m[0m networkInterfaces = [
+                      [31m-[0m[0m {},
+                    ]
+                }
+              [31m-[0m[0m provisioningState = "Succeeded"
+              [31m-[0m[0m storageProfile    = {
+                  [31m-[0m[0m imageReference = {
+                      [31m-[0m[0m exactVersion = "22.04.202512181"
+                    }
+                }
+              [31m-[0m[0m timeCreated       = "2026-01-04T02:30:29.1890384+00:00"
+              [31m-[0m[0m vmId              = "9a9a2f93-f844-4916-aed5-a93ce68bf389"
+            }
+          [31m-[0m[0m type       = "Microsoft.Compute/virtualMachines"
+          [31m-[0m[0m zones      = [
+              [31m-[0m[0m "1",
+            ]
+        } -> (known after apply)
+      [32m+[0m[0m replace_triggers_external_values = {
+          [32m+[0m[0m admin_password_version                   = {
+              [32m+[0m[0m value = 1
+            }
+          [32m+[0m[0m admin_ssh_key                            = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m admin_username                           = {
+              [32m+[0m[0m value = "adminuser"
+            }
+          [32m+[0m[0m availability_set_id                      = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m computer_name                            = {
+              [32m+[0m[0m value = "acctestVM1-146466"
+            }
+          [32m+[0m[0m custom_data_version                      = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m disable_password_authentication          = {
+              [32m+[0m[0m value = false
+            }
+          [32m+[0m[0m edge_zone                                = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m eviction_policy                          = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m location                                 = {
+              [32m+[0m[0m value = "eastus"
+            }
+          [32m+[0m[0m name                                     = {
+              [32m+[0m[0m value = "acctestVM1-146466"
+            }
+          [32m+[0m[0m os_disk_diff_disk_settings_option        = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m os_disk_diff_disk_settings_placement     = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m os_disk_name                             = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m os_disk_secure_vm_disk_encryption_set_id = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m os_disk_security_encryption_type         = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m os_disk_storage_account_type             = {
+              [32m+[0m[0m value = "Standard_LRS"
+            }
+          [32m+[0m[0m plan                                     = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m priority                                 = {
+              [32m+[0m[0m value = "Regular"
+            }
+          [32m+[0m[0m provision_vm_agent                       = {
+              [32m+[0m[0m value = true
+            }
+          [32m+[0m[0m resource_group_id                        = {
+              [32m+[0m[0m value = "/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466"
+            }
+          [32m+[0m[0m source_image_id                          = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m source_image_reference                   = {
+              [32m+[0m[0m value = {
+                  [32m+[0m[0m offer     = "0001-com-ubuntu-server-jammy"
+                  [32m+[0m[0m publisher = "Canonical"
+                  [32m+[0m[0m sku       = "22_04-lts"
+                  [32m+[0m[0m version   = "latest"
+                }
+            }
+          [32m+[0m[0m vtpm_enabled                             = {
+              [32m+[0m[0m value = [90mnull[0m[0m
+            }
+          [32m+[0m[0m zone                                     = {
+              [32m+[0m[0m value = "1"
+            }
+        }
+      [32m+[0m[0m sensitive_body_version           = {
+          [32m+[0m[0m "properties.osProfile.adminPassword" = "1"
+          [32m+[0m[0m "properties.osProfile.customData"    = [90mnull[0m[0m
+        }
+      [33m~[0m[0m type                             = "Microsoft.Compute/virtualMachines@2025-04-01" [33m->[0m[0m "Microsoft.Compute/virtualMachines@2024-03-01"
+        [90m# (6 unchanged attributes hidden)[0m[0m
+
+      [32m+[0m[0m timeouts {
+          [32m+[0m[0m create = "45m"
+          [32m+[0m[0m delete = "45m"
+          [32m+[0m[0m read   = "5m"
+          [32m+[0m[0m update = "45m"
+        }
+    }
+
+[1m  # module.replicator.modtm_telemetry.telemetry[0][0m will be created
+[0m  [32m+[0m[0m resource "modtm_telemetry" "telemetry" {
+      [32m+[0m[0m ephemeral_number = (known after apply)
+      [32m+[0m[0m id               = (known after apply)
+      [32m+[0m[0m nonce            = (known after apply)
+      [32m+[0m[0m tags             = {
+          [32m+[0m[0m "location"        = "eastus"
+          [32m+[0m[0m "module_source"   = "../.."
+          [32m+[0m[0m "module_version"  = [90mnull[0m[0m
+          [32m+[0m[0m "random_id"       = (known after apply)
+          [32m+[0m[0m "subscription_id" = "f7a632a5-49db-4c5e-9828-cd62cb753971"
+          [32m+[0m[0m "tenant_id"       = "fc2bf966-a984-438c-93b7-bc5a06fe7f0d"
+        }
+    }
+
+[1m  # module.replicator.random_uuid.telemetry[0][0m will be created
+[0m  [32m+[0m[0m resource "random_uuid" "telemetry" {
+      [32m+[0m[0m id     = (known after apply)
+      [32m+[0m[0m result = (known after apply)
+    }
+
+[1mPlan:[0m [0m2 to add, 1 to change, 0 to destroy.
+[0m[1mmodule.replicator.random_uuid.telemetry[0]: Creating...[0m[0m
+[0m[1mmodule.replicator.random_uuid.telemetry[0]: Creation complete after 0s [id=4699d7cc-38a3-4585-b2c6-851cabbf5609][0m
+[0m[1mmodule.replicator.modtm_telemetry.telemetry[0]: Creating...[0m[0m
+[0m[1mazapi_resource.this: Modifying... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachines/acctestVM1-146466][0m[0m
+[0m[1mmodule.replicator.modtm_telemetry.telemetry[0]: Creation complete after 2s [id=880d1487-ca19-40ba-a0f0-18a299b2e85d][0m
+[0m[1mazapi_resource.this: Modifications complete after 1s [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachines/acctestVM1-146466][0m
+[0m[1m[32m
+Apply complete! Resources: 2 added, 1 changed, 0 destroyed.[0m
+[0m[1mrandom_integer.number: Refreshing state... [id=146466][0m
+[0m[1mmodule.replicator.random_uuid.telemetry[0]: Refreshing state... [id=4699d7cc-38a3-4585-b2c6-851cabbf5609][0m
+[0m[1mrandom_string.name: Refreshing state... [id=qxom91ct][0m
+[0m[1mmodule.replicator.data.modtm_module_source.telemetry[0]: Reading...[0m[0m
+[0m[1mmodule.replicator.data.modtm_module_source.telemetry[0]: Read complete after 0s[0m
+[0m[1mmodule.replicator.data.azapi_client_config.telemetry[0]: Reading...[0m[0m
+[0m[1mmodule.replicator.data.azapi_client_config.telemetry[0]: Read complete after 0s [id=clientConfigs/subscriptionId=f7a632a5-49db-4c5e-9828-cd62cb753971;tenantId=fc2bf966-a984-438c-93b7-bc5a06fe7f0d][0m
+[0m[1mazurerm_resource_group.test: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466][0m
+[0m[1mmodule.replicator.modtm_telemetry.telemetry[0]: Refreshing state... [id=880d1487-ca19-40ba-a0f0-18a299b2e85d][0m
+[0m[1mazurerm_virtual_network.test: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Network/virtualNetworks/acctestnw-146466][0m
+[0m[1mazurerm_orchestrated_virtual_machine_scale_set.test: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachineScaleSets/acctestVMO-146466][0m
+[0m[1mmodule.replicator.data.azapi_resource.existing: Reading...[0m[0m
+[0m[1mmodule.replicator.data.azapi_resource.existing: Read complete after 1s [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachines/acctestVM1-146466][0m
+[0m[1mazurerm_subnet.test: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Network/virtualNetworks/acctestnw-146466/subnets/internal][0m
+[0m[1mazurerm_network_interface.first: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Network/networkInterfaces/acctestnic1-146466][0m
+[0m[1mazurerm_network_interface.second: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Network/networkInterfaces/acctestnic2-146466][0m
+[0m[1mazurerm_linux_virtual_machine.another: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachines/acctestVM2-146466][0m
+[0m[1mazapi_resource.this: Refreshing state... [id=/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-146466/providers/Microsoft.Compute/virtualMachines/acctestVM1-146466][0m
+
+[0m[1m[32mNo changes.[0m[1m Your infrastructure matches the configuration.[0m
+
+[0mTerraform has compared your real infrastructure against your configuration
+and found no differences, so no changes are needed.

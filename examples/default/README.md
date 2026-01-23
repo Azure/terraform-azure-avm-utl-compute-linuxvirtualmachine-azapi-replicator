@@ -5,69 +5,111 @@
 This deploys the module in its simplest form.
 
 ```hcl
-terraform {
-  required_version = "~> 1.5"
+resource "random_integer" "number" {
+  max = 999999
+  min = 100000
+}
 
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 4.21"
-    }
-    modtm = {
-      source  = "azure/modtm"
-      version = "~> 0.3"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.5"
-    }
+locals {
+  ed25519_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDqzSi9IHoYnbE3YQ+B2fQEVT8iGFemyPovpEtPziIVB you@me.com"
+  first_public_key   = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC+wWK73dCr+jgQOAxNsHAnNNNMEMWOHYEccp6wJm2gotpr9katuF/ZAdou5AaW1C61slRkHRkpRRX9FA9CYBiitZgvCCz+3nWNN7l/Up54Zps/pHWGZLHNJZRYyAB6j5yVLMVHIHriY49d/GZTZVNB8GoJv9Gakwc/fuEZYYl4YDFiGMBP///TzlI4jhiJzjKnEvqPFki5p2ZRJqcbCiF4pJrxUQR/RXqVFQdbRLZgYfJ8xGB878RENq3yQ39d8dVOkq4edbkzwcUmwwwkYVPIoDGsYLaRHnG+To7FvMeyO7xDVQkMKzopTQV8AuKpyvpqu0a9pWOMaiCyDytO7GGN you@me.com"
+  second_public_key  = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC0/NDMj2wG6bSa6jbn6E3LYlUsYiWMp1CQ2sGAijPALW6OrSu30lz7nKpoh8Qdw7/A4nAJgweI5Oiiw5/BOaGENM70Go+VM8LQMSxJ4S7/8MIJEZQp5HcJZ7XDTcEwruknrd8mllEfGyFzPvJOx6QAQocFhXBW6+AlhM3gn/dvV5vdrO8ihjET2GoDUqXPYC57ZuY+/Fz6W3KV8V97BvNUhpY5yQrP5VpnyvvXNFQtzDfClTvZFPuoHQi3/KYPi6O0FSD74vo8JOBZZY09boInPejkm9fvHQqfh0bnN7B6XJoUwC1Qprrx+XIy7ust5AEn5XL7d4lOvcR14MxDDKEp you@me.com"
+}
+
+resource "azurerm_resource_group" "test" {
+  location = "eastus"
+  name     = "acctestRG-${random_integer.number.result}"
+}
+
+resource "azurerm_virtual_network" "test" {
+  location            = azurerm_resource_group.test.location
+  name                = "acctestnw-${random_integer.number.result}"
+  resource_group_name = azurerm_resource_group.test.name
+  address_space       = ["10.0.0.0/16"]
+}
+
+resource "azurerm_subnet" "test" {
+  address_prefixes     = ["10.0.2.0/24"]
+  name                 = "internal"
+  resource_group_name  = azurerm_resource_group.test.name
+  virtual_network_name = azurerm_virtual_network.test.name
+}
+
+resource "azurerm_network_interface" "test" {
+  location            = azurerm_resource_group.test.location
+  name                = "acctestnic-${random_integer.number.result}"
+  resource_group_name = azurerm_resource_group.test.name
+
+  ip_configuration {
+    name                          = "internal"
+    private_ip_address_allocation = "Dynamic"
+    subnet_id                     = azurerm_subnet.test.id
   }
 }
 
-provider "azurerm" {
-  features {}
+
+module "replicator" {
+  source = "../.."
+
+  location = azurerm_resource_group.test.location
+  name     = "acctestVM-${random_integer.number.result}"
+  network_interface_ids = [
+    azurerm_network_interface.test.id,
+  ]
+  os_disk = {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+  resource_group_id = azurerm_resource_group.test.id
+  size              = "Standard_F2"
+  admin_ssh_key = toset([
+    {
+      username   = "adminuser"
+      public_key = local.first_public_key
+    }
+  ])
+  admin_username   = "adminuser"
+  enable_telemetry = var.enable_telemetry
+  source_image_reference = {
+    publisher = "Canonical"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts"
+    version   = "latest"
+  }
 }
 
+resource "azapi_resource" "this" {
+  location                         = module.replicator.azapi_header.location
+  name                             = module.replicator.azapi_header.name
+  parent_id                        = module.replicator.azapi_header.parent_id
+  type                             = module.replicator.azapi_header.type
+  body                             = module.replicator.body
+  ignore_null_property             = module.replicator.azapi_header.ignore_null_property
+  locks                            = module.replicator.locks
+  replace_triggers_external_values = module.replicator.replace_triggers_external_values
+  retry                            = module.replicator.retry
+  sensitive_body                   = module.replicator.sensitive_body
+  sensitive_body_version           = module.replicator.sensitive_body_version
+  tags                             = module.replicator.azapi_header.tags
 
-## Section to provide a random Azure region for the resource group
-# This allows us to randomize the region for the resource group.
-module "regions" {
-  source  = "Azure/avm-utl-regions/azurerm"
-  version = "~> 0.1"
-}
+  dynamic "identity" {
+    for_each = module.replicator.azapi_header.identity != null ? [module.replicator.azapi_header.identity] : []
 
-# This allows us to randomize the region for the resource group.
-resource "random_integer" "region_index" {
-  max = length(module.regions.regions) - 1
-  min = 0
-}
-## End of section to provide a random Azure region for the resource group
+    content {
+      type         = identity.value.type
+      identity_ids = try(identity.value.identity_ids, null)
+    }
+  }
+  dynamic "timeouts" {
+    for_each = module.replicator.timeouts != null ? [module.replicator.timeouts] : []
 
-# This ensures we have unique CAF compliant names for our resources.
-module "naming" {
-  source  = "Azure/naming/azurerm"
-  version = "~> 0.3"
-}
-
-# This is required for resource modules
-resource "azurerm_resource_group" "this" {
-  location = module.regions.regions[random_integer.region_index.result].name
-  name     = module.naming.resource_group.name_unique
-}
-
-# This is the module call
-# Do not specify location here due to the randomization above.
-# Leaving location as `null` will cause the module to use the resource group location
-# with a data source.
-module "test" {
-  source = "../../"
-
-  # source             = "Azure/avm-<res/ptn>-<name>/azurerm"
-  # ...
-  location            = azurerm_resource_group.this.location
-  name                = "TODO" # TODO update with module.naming.<RESOURCE_TYPE>.name_unique
-  resource_group_name = azurerm_resource_group.this.name
-  enable_telemetry    = var.enable_telemetry # see variables.tf
+    content {
+      create = timeouts.value.create
+      delete = timeouts.value.delete
+      read   = timeouts.value.read
+      update = timeouts.value.update
+    }
+  }
 }
 ```
 
@@ -76,7 +118,9 @@ module "test" {
 
 The following requirements are needed by this module:
 
-- <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (~> 1.5)
+- <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) (~> 1.9)
+
+- <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (~> 2.4)
 
 - <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) (~> 4.21)
 
@@ -88,8 +132,12 @@ The following requirements are needed by this module:
 
 The following resources are used by this module:
 
-- [azurerm_resource_group.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group) (resource)
-- [random_integer.region_index](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/integer) (resource)
+- [azapi_resource.this](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azurerm_network_interface.test](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_interface) (resource)
+- [azurerm_resource_group.test](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group) (resource)
+- [azurerm_subnet.test](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/subnet) (resource)
+- [azurerm_virtual_network.test](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/virtual_network) (resource)
+- [random_integer.number](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/integer) (resource)
 
 <!-- markdownlint-disable MD013 -->
 ## Required Inputs
@@ -108,7 +156,7 @@ If it is set to false, then no telemetry will be collected.
 
 Type: `bool`
 
-Default: `true`
+Default: `false`
 
 ## Outputs
 
@@ -118,21 +166,9 @@ No outputs.
 
 The following Modules are called:
 
-### <a name="module_naming"></a> [naming](#module\_naming)
+### <a name="module_replicator"></a> [replicator](#module\_replicator)
 
-Source: Azure/naming/azurerm
-
-Version: ~> 0.3
-
-### <a name="module_regions"></a> [regions](#module\_regions)
-
-Source: Azure/avm-utl-regions/azurerm
-
-Version: ~> 0.1
-
-### <a name="module_test"></a> [test](#module\_test)
-
-Source: ../../
+Source: ../..
 
 Version:
 

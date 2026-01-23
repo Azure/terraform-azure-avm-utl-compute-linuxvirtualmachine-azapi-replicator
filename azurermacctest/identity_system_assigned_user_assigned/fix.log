@@ -1,0 +1,28 @@
+Test Case: identity_system_assigned_user_assigned
+================================================================================
+
+Initial Error:
+Error: Failed to create/update resource
+creating/updating Resource: PUT https://management.azure.com/.../virtualMachines/acctestVM-505564
+RESPONSE 400: 400 Bad Request
+ERROR CODE: MissingIdentityIds
+{
+  "error": {
+    "code": "MissingIdentityIds",
+    "message": "The identity ids must not be null or empty for 'UserAssigned' identity type."
+  }
+}
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The azapi.tf file references identity.value.identity_ids but the module outputs userAssignedIdentities as a map object (not identity_ids). The identity block needs to extract keys from the userAssignedIdentities map. Also, the for_each condition uses can() which doesn't properly check for null values.
+- Fix Method: Updated identity dynamic block to use pattern from auth_ssh_multiple test case - changed for_each to use != null check and identity_ids to extract keys from userAssignedIdentities map
+- Changes Made: 
+  * Line 56: Changed from "can(module.replicator.azapi_header.identity)" to "module.replicator.azapi_header.identity != null"
+  * Line 59: Changed from "try(identity.value.identity_ids, null)" to "try(identity.value.userAssignedIdentities, null) != null ? keys(identity.value.userAssignedIdentities) : null"
+- Result: Retrying terraform plan...
+
+Final Result: Fix successful
+
+Second terraform plan after apply shows: No changes. Your infrastructure matches the configuration.

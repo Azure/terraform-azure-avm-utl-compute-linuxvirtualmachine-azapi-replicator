@@ -1,0 +1,23 @@
+Test Case: other_priority_spot_max_bid_price
+================================================================================
+
+Step: Step 2 - Apply baseline configuration
+Failed Command: terraform apply -auto-approve -input=false
+
+Error:
+creating Linux Virtual Machine (Subscription: "f7a632a5-49db-4c5e-9828-cd62cb753971"
+Resource Group Name: "acctestRG-858731"
+Virtual Machine Name: "acctestVM-858731"): performing CreateOrUpdate: unexpected status 409 (409 Conflict) with error:
+SkuNotAvailable: The requested VM size for resource 'Following SKUs have failed for Capacity Restrictions: Standard_F2'
+is currently not available in location 'eastus'. Please try another size or deploy to a different location or different zone.
+See https://aka.ms/azureskunotavailable for details.
+
+Root Cause Analysis:
+The VM SKU "Standard_F2" is not available in the "eastus" region due to capacity restrictions. This is an Azure platform
+issue and not related to the Terraform configuration or AzAPI migration. This is a spot priority VM which has stricter
+capacity availability requirements.
+
+Conclusion:
+Step 2 baseline validation failed due to Azure platform capacity constraints. The test configuration itself appears to be
+valid but cannot be deployed due to infrastructure limitations. The test case should be marked as "invalid" as it cannot
+proceed to further steps.

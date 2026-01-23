@@ -1,0 +1,32 @@
+Test Case: scaling_proximity_placement_group_update
+================================================================================
+
+Initial Error:
+│ Error: Missing required argument
+│
+│   on azapi.tf line 1, in module "replicator":
+│    1: module "replicator" {
+│
+│ The argument "resource_group_id" is required, but no definition was found.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The module references migrate_variables.tf which requires resource_group_id instead of just resource_group_name. The azapi.tf.bak file was generated without resource_group_id parameter.
+- Fix Method: Add resource_group_id parameter to module call in azapi.tf
+- Changes Made: Added line: resource_group_id = azurerm_resource_group.test.id
+- Result: Plan progressed but hit new error - identity attribute not found
+
+Attempt 2:
+- Problem Analysis: The identity output doesn't exist as a separate module output. Identity is nested inside azapi_header output. The azapi.tf was referencing module.replicator.identity which doesn't exist.
+- Fix Method: Change identity reference from module.replicator.identity to module.replicator.azapi_header.identity
+- Changes Made: Updated dynamic identity block to use module.replicator.azapi_header.identity instead of module.replicator.identity
+- Result: Plan progressed but hit new error - identity.value is null
+
+Attempt 3:
+- Problem Analysis: Using can() to check for identity doesn't handle null values properly. Also, identity_ids should be extracted from userAssignedIdentities keys, not directly from identity_ids property.
+- Fix Method: Change from can() check to != null check, and extract identity_ids from userAssignedIdentities keys
+- Changes Made: Updated identity dynamic block to use != null check and keys(identity.value.userAssignedIdentities) for identity_ids
+- Result: Success - Plan shows acceptable drift only (ignore_null_property, locks, replace_triggers_external_values, sensitive_body_version, output, type API version change, and body changes for computed/default Azure API fields)
+
+Final Result: Fix successful

@@ -1,0 +1,26 @@
+Test Case: identity_user_assigned_updated
+================================================================================
+
+Initial Error:
+Error: Missing required argument
+
+  on azapi.tf line 1, in module "replicator":
+   1: module "replicator" {
+
+The argument "resource_group_name" is required, but no definition was found.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The azapi.tf module is using resource_group_id instead of resource_group_name. The original azurerm resource uses resource_group_name = azurerm_resource_group.test.name
+- Fix Method: Change resource_group_id to resource_group_name in module parameters
+- Changes Made: Replace line 5 in azapi.tf from "resource_group_id = azurerm_resource_group.test.id" to "resource_group_name = azurerm_resource_group.test.name"
+- Result: Failed - Now requires resource_group_id
+
+Attempt 4:
+- Problem Analysis: Apply failed with "MissingIdentityIds" error. The azapi_resource identity block was trying to get identity_ids from identity.value.identity_ids, but the module outputs identity.value.userAssignedIdentities instead. Comparing with identity_user_assigned test, found the correct way is to use keys(identity.value.userAssignedIdentities).
+- Fix Method: Update identity block to extract identity_ids from userAssignedIdentities keys
+- Changes Made: Changed line 60 from "identity_ids = try(identity.value.identity_ids, null)" to "identity_ids = try(keys(identity.value.userAssignedIdentities), null)"
+- Result: Success - Apply completed successfully, second plan shows no changes (idempotent)
+
+Final Result: Fix successful

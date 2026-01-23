@@ -1,0 +1,1 @@
+Test Case: disk_os_custom_size | Error: expected os_disk.0.disk_size_gb to be in the range (0 - 4095), got 823817 | Fix: Changed random_integer min from 100000 to 100, max from 999999 to 500 | Result: Success

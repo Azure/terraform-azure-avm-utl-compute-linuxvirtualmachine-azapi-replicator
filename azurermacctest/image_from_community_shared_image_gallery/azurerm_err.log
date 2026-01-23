@@ -1,0 +1,27 @@
+Test Case: image_from_community_shared_image_gallery
+================================================================================
+
+Step 2 Baseline Validation Failed
+
+Failed Command: terraform apply -auto-approve -input=false
+
+Error:
+creating/updating Image (Subscription: "f7a632a5-49db-4c5e-9828-cd62cb753971"
+Resource Group Name: "acctestRG-208032"
+Image Name: "capture"): performing CreateOrUpdate: unexpected status 409 (409 Conflict) with error: OperationNotAllowed: The operation 'Create Image' requires the Virtual Machine 'acctestsourceVM-208032' to be Generalized.
+
+Root Cause Analysis:
+The test configuration attempts to create an Azure Image (azurerm_image.test) directly from a running virtual machine (azurerm_linux_virtual_machine.source) without first generalizing the VM. 
+
+Azure requires VMs to be generalized (using `waagent -deprovision+user` inside the VM and then marking it as generalized via Azure API) before they can be used as a source for creating custom images.
+
+This is a fundamental limitation of the test case setup - the test configuration in main.tf cannot properly generalize the VM within Terraform's declarative model. VM generalization is a one-way operation that requires:
+1. Running commands inside the VM (which Terraform doesn't manage)
+2. Shutting down the VM
+3. Marking it as generalized via Azure API
+4. After generalization, the VM cannot be started again
+
+Conclusion:
+This test case is INVALID for automated Terraform testing. The AzureRM baseline configuration itself cannot be applied successfully due to Azure platform requirements that cannot be satisfied in a pure Terraform workflow. The test case would require manual intervention or a different testing approach (e.g., pre-generalized VMs, VM extensions for generalization, or using pre-existing images).
+
+This is not a problem with the AzAPI migration or the Replicator Module - the original AzureRM configuration is fundamentally incompatible with automated testing.

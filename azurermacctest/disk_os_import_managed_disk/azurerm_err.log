@@ -1,0 +1,44 @@
+Test Case: disk_os_import_managed_disk
+================================================================================
+
+Test Status: Invalid
+
+Reason:
+This test case is part of a multi-step test sequence and cannot be executed as a standalone test. The configuration expects an existing managed disk to already exist in the resource group, but none is present.
+
+Test Design:
+The original AzureRM provider acceptance test (TestAccLinuxVirtualMachine_diskOSImportManagedDisk) executes the following sequence:
+1. Create a VM with diskOSBasicNoDelete (which has delete_os_disk_on_deletion = false)
+2. Remove the VM with osDiskImportTemplateWithProvider (leaving the managed OS disk behind)
+3. Create a new VM importing the existing managed disk with diskOSImportManagedDisk (THIS TEST CASE)
+4. Cleanup with diskOSImportManagedDiskCleanup
+
+Error Encountered:
+```
+Error: Invalid index
+
+  on azurerm.tf line 11, in resource "azurerm_linux_virtual_machine" "test":
+  11:   os_managed_disk_id = data.azurerm_managed_disks.test.disk.0.id
+    ├────────────────
+    │ data.azurerm_managed_disks.test.disk is empty list of object
+
+The given key does not identify an element in this collection value: the collection has no elements.
+```
+
+Root Cause:
+The data source `azurerm_managed_disks` queries for managed disks in the resource group, but finds none because:
+- This is the first apply in a clean resource group
+- No previous step has created a VM with a managed OS disk
+- The test configuration assumes a disk already exists from a prior test step
+
+Conclusion:
+This test case cannot be validated independently. It is designed to test the ability to import an existing managed OS disk into a new VM configuration, which requires:
+- Pre-existing infrastructure (managed disk from a deleted VM)
+- Sequential execution as part of a larger test suite
+
+The test case should be either:
+1. Skipped as invalid for standalone testing
+2. Or restructured to include the full multi-step sequence in a single test directory
+
+Failed Command: terraform apply -auto-approve -input=false
+Step: 2 (Verify AzureRM Configuration - Baseline Test)

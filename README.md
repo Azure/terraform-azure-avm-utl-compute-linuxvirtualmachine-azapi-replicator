@@ -23,15 +23,10 @@ The following requirements are needed by this module:
 
 The following resources are used by this module:
 
-- [azurerm_management_lock.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/management_lock) (resource)
-- [azurerm_private_endpoint.this_managed_dns_zone_groups](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/private_endpoint) (resource)
-- [azurerm_private_endpoint.this_unmanaged_dns_zone_groups](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/private_endpoint) (resource)
-- [azurerm_private_endpoint_application_security_group_association.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/private_endpoint_application_security_group_association) (resource)
-- [azurerm_resource_group.TODO](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group) (resource)
-- [azurerm_role_assignment.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) (resource)
 - [modtm_telemetry.telemetry](https://registry.terraform.io/providers/azure/modtm/latest/docs/resources/telemetry) (resource)
 - [random_uuid.telemetry](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) (resource)
 - [azapi_client_config.telemetry](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/client_config) (data source)
+- [azapi_resource.existing](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource) (data source)
 - [modtm_module_source.telemetry](https://registry.terraform.io/providers/azure/modtm/latest/docs/data-sources/module_source) (data source)
 
 <!-- markdownlint-disable MD013 -->
@@ -41,19 +36,66 @@ The following input variables are required:
 
 ### <a name="input_location"></a> [location](#input\_location)
 
-Description: Azure region where the resource should be deployed.
+Description: (Required) The Azure location where the Linux Virtual Machine should exist. Changing this forces a new resource to be created.
 
 Type: `string`
 
 ### <a name="input_name"></a> [name](#input\_name)
 
-Description: The name of the this resource.
+Description: (Required) The name of the Linux Virtual Machine. Changing this forces a new resource to be created.
 
 Type: `string`
 
-### <a name="input_resource_group_name"></a> [resource\_group\_name](#input\_resource\_group\_name)
+### <a name="input_network_interface_ids"></a> [network\_interface\_ids](#input\_network\_interface\_ids)
 
-Description: The resource group where the resources will be deployed.
+Description: (Required). A list of Network Interface IDs which should be attached to this Virtual Machine. The first Network Interface ID in this list will be the Primary Network Interface on the Virtual Machine.
+
+Type: `list(string)`
+
+### <a name="input_os_disk"></a> [os\_disk](#input\_os\_disk)
+
+Description: - `caching` - (Required) The Type of Caching which should be used for the Internal OS Disk. Possible values are `None`, `ReadOnly` and `ReadWrite`.
+- `disk_encryption_set_id` - (Optional) The ID of the Disk Encryption Set which should be used to Encrypt this OS Disk. Conflicts with `secure_vm_disk_encryption_set_id`.
+- `disk_size_gb` - (Optional) The Size of the Internal OS Disk in GB, if you wish to vary from the size used in the image this Virtual Machine is sourced from.
+- `name` - (Optional) The name which should be used for the Internal OS Disk. Changing this forces a new resource to be created.
+- `secure_vm_disk_encryption_set_id` - (Optional) The ID of the Disk Encryption Set which should be used to Encrypt this OS Disk when the Virtual Machine is a Confidential VM. Conflicts with `disk_encryption_set_id`. Changing this forces a new resource to be created.
+- `security_encryption_type` - (Optional) Encryption Type when the Virtual Machine is a Confidential VM. Possible values are `VMGuestStateOnly` and `DiskWithVMGuestState`. Changing this forces a new resource to be created.
+- `storage_account_type` - (Optional) The Type of Storage Account which should back this the Internal OS Disk. Possible values are `Standard_LRS`, `StandardSSD_LRS`, `Premium_LRS`, `StandardSSD_ZRS` and `Premium_ZRS`. Changing this forces a new resource to be created.
+- `write_accelerator_enabled` - (Optional) Should Write Accelerator be Enabled for this OS Disk? Defaults to `false`.
+
+---
+`diff_disk_settings` block supports the following:
+- `option` - (Required) Specifies the Ephemeral Disk Settings for the OS Disk. At this time the only possible value is `Local`. Changing this forces a new resource to be created.
+- `placement` - (Optional) Specifies where to store the Ephemeral Disk. Possible values are `CacheDisk`, `ResourceDisk` and `NvmeDisk`. Defaults to `CacheDisk`. Changing this forces a new resource to be created.
+
+Type:
+
+```hcl
+object({
+    caching                          = string
+    disk_encryption_set_id           = optional(string)
+    disk_size_gb                     = optional(number)
+    name                             = optional(string)
+    secure_vm_disk_encryption_set_id = optional(string)
+    security_encryption_type         = optional(string)
+    storage_account_type             = string
+    write_accelerator_enabled        = optional(bool)
+    diff_disk_settings = optional(object({
+      option    = string
+      placement = optional(string)
+    }))
+  })
+```
+
+### <a name="input_resource_group_id"></a> [resource\_group\_id](#input\_resource\_group\_id)
+
+Description: (Required) The ID of the Resource Group in which the Linux Virtual Machine should exist. Changing this forces a new resource to be created.
+
+Type: `string`
+
+### <a name="input_size"></a> [size](#input\_size)
+
+Description: (Required) The SKU which should be used for this Virtual Machine, such as `Standard_F2`.
 
 Type: `string`
 
@@ -61,63 +103,171 @@ Type: `string`
 
 The following input variables are optional (have default values):
 
-### <a name="input_customer_managed_key"></a> [customer\_managed\_key](#input\_customer\_managed\_key)
+### <a name="input_additional_capabilities"></a> [additional\_capabilities](#input\_additional\_capabilities)
 
-Description: A map describing customer-managed keys to associate with the resource. This includes the following properties:
-- `key_vault_resource_id` - The resource ID of the Key Vault where the key is stored.
-- `key_name` - The name of the key.
-- `key_version` - (Optional) The version of the key. If not specified, the latest version is used.
-- `user_assigned_identity` - (Optional) An object representing a user-assigned identity with the following properties:
-  - `resource_id` - The resource ID of the user-assigned identity.
+Description: - `hibernation_enabled` - (Optional) Whether to enable the hibernation capability or not.
+- `ultra_ssd_enabled` - (Optional) Should the capacity to enable Data Disks of the `UltraSSD_LRS` storage account type be supported on this Virtual Machine? Defaults to `false`.
 
 Type:
 
 ```hcl
 object({
-    key_vault_resource_id = string
-    key_name              = string
-    key_version           = optional(string, null)
-    user_assigned_identity = optional(object({
-      resource_id = string
-    }), null)
+    hibernation_enabled = optional(bool, false)
+    ultra_ssd_enabled   = optional(bool, false)
   })
 ```
 
 Default: `null`
 
-### <a name="input_diagnostic_settings"></a> [diagnostic\_settings](#input\_diagnostic\_settings)
+### <a name="input_admin_password"></a> [admin\_password](#input\_admin\_password)
 
-Description: A map of diagnostic settings to create on the Key Vault. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
+Description: (Optional) The Password which should be used for the local-administrator on this Virtual Machine. Changing this forces a new resource to be created.
 
-- `name` - (Optional) The name of the diagnostic setting. One will be generated if not set, however this will not be unique if you want to create multiple diagnostic setting resources.
-- `log_categories` - (Optional) A set of log categories to send to the log analytics workspace. Defaults to `[]`.
-- `log_groups` - (Optional) A set of log groups to send to the log analytics workspace. Defaults to `["allLogs"]`.
-- `metric_categories` - (Optional) A set of metric categories to send to the log analytics workspace. Defaults to `["AllMetrics"]`.
-- `log_analytics_destination_type` - (Optional) The destination type for the diagnostic setting. Possible values are `Dedicated` and `AzureDiagnostics`. Defaults to `Dedicated`.
-- `workspace_resource_id` - (Optional) The resource ID of the log analytics workspace to send logs and metrics to.
-- `storage_account_resource_id` - (Optional) The resource ID of the storage account to send logs and metrics to.
-- `event_hub_authorization_rule_resource_id` - (Optional) The resource ID of the event hub authorization rule to send logs and metrics to.
-- `event_hub_name` - (Optional) The name of the event hub. If none is specified, the default event hub will be selected.
-- `marketplace_partner_resource_id` - (Optional) The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic LogsLogs.
+Type: `string`
+
+Default: `null`
+
+### <a name="input_admin_password_version"></a> [admin\_password\_version](#input\_admin\_password\_version)
+
+Description: (Optional) Version tracking for admin\_password. Must be set when admin\_password is provided.
+
+Type: `number`
+
+Default: `null`
+
+### <a name="input_admin_ssh_key"></a> [admin\_ssh\_key](#input\_admin\_ssh\_key)
+
+Description: - `public_key` - (Required) The Public Key which should be used for authentication, which needs to be in `ssh-rsa` format with at least 2048-bit or in `ssh-ed25519` format. Changing this forces a new resource to be created.
+- `username` - (Required) The Username for which this Public SSH Key should be configured. Changing this forces a new resource to be created.
 
 Type:
 
 ```hcl
-map(object({
-    name                                     = optional(string, null)
-    log_categories                           = optional(set(string), [])
-    log_groups                               = optional(set(string), ["allLogs"])
-    metric_categories                        = optional(set(string), ["AllMetrics"])
-    log_analytics_destination_type           = optional(string, "Dedicated")
-    workspace_resource_id                    = optional(string, null)
-    storage_account_resource_id              = optional(string, null)
-    event_hub_authorization_rule_resource_id = optional(string, null)
-    event_hub_name                           = optional(string, null)
-    marketplace_partner_resource_id          = optional(string, null)
+set(object({
+    public_key = string
+    username   = string
   }))
 ```
 
-Default: `{}`
+Default: `null`
+
+### <a name="input_admin_username"></a> [admin\_username](#input\_admin\_username)
+
+Description: (Optional) The username of the local administrator used for the Virtual Machine. Changing this forces a new resource to be created.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_allow_extension_operations"></a> [allow\_extension\_operations](#input\_allow\_extension\_operations)
+
+Description: (Optional) Should Extension Operations be allowed on this Virtual Machine? Defaults to `true`.
+
+Type: `bool`
+
+Default: `true`
+
+### <a name="input_availability_set_id"></a> [availability\_set\_id](#input\_availability\_set\_id)
+
+Description: (Optional) Specifies the ID of the Availability Set in which the Virtual Machine should exist. Changing this forces a new resource to be created.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_boot_diagnostics"></a> [boot\_diagnostics](#input\_boot\_diagnostics)
+
+Description: - `storage_account_uri` - (Optional) The Primary/Secondary Endpoint for the Azure Storage Account which should be used to store Boot Diagnostics, including Console Output and Screenshots from the Hypervisor.
+
+Type:
+
+```hcl
+object({
+    storage_account_uri = optional(string)
+  })
+```
+
+Default: `null`
+
+### <a name="input_bypass_platform_safety_checks_on_user_schedule_enabled"></a> [bypass\_platform\_safety\_checks\_on\_user\_schedule\_enabled](#input\_bypass\_platform\_safety\_checks\_on\_user\_schedule\_enabled)
+
+Description: (Optional) Specifies whether to skip platform scheduled patching when a user schedule is associated with the VM. Defaults to `false`.
+
+Type: `bool`
+
+Default: `false`
+
+### <a name="input_capacity_reservation_group_id"></a> [capacity\_reservation\_group\_id](#input\_capacity\_reservation\_group\_id)
+
+Description: (Optional) Specifies the ID of the Capacity Reservation Group which the Virtual Machine should be allocated to.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_computer_name"></a> [computer\_name](#input\_computer\_name)
+
+Description: (Optional) Specifies the Hostname which should be used for this Virtual Machine. If unspecified this defaults to the value for the `name` field. If the value of the `name` field is not a valid `computer_name`, then you must specify `computer_name`. Changing this forces a new resource to be created.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_custom_data"></a> [custom\_data](#input\_custom\_data)
+
+Description: (Optional) The Base64-Encoded Custom Data which should be used for this Virtual Machine. Changing this forces a new resource to be created.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_custom_data_version"></a> [custom\_data\_version](#input\_custom\_data\_version)
+
+Description: (Optional) Version tracking for custom\_data. Must be set when custom\_data is provided.
+
+Type: `number`
+
+Default: `null`
+
+### <a name="input_dedicated_host_group_id"></a> [dedicated\_host\_group\_id](#input\_dedicated\_host\_group\_id)
+
+Description: (Optional) The ID of a Dedicated Host Group that this Linux Virtual Machine should be run within. Conflicts with `dedicated_host_id`.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_dedicated_host_id"></a> [dedicated\_host\_id](#input\_dedicated\_host\_id)
+
+Description: (Optional) The ID of a Dedicated Host where this machine should be run on. Conflicts with `dedicated_host_group_id`.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_disable_password_authentication"></a> [disable\_password\_authentication](#input\_disable\_password\_authentication)
+
+Description: (Optional) Should Password Authentication be disabled on this Virtual Machine? Changing this forces a new resource to be created.
+
+Type: `bool`
+
+Default: `null`
+
+### <a name="input_disk_controller_type"></a> [disk\_controller\_type](#input\_disk\_controller\_type)
+
+Description: (Optional) Specifies the Disk Controller Type used for this Virtual Machine. Possible values are `SCSI` and `NVMe`.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_edge_zone"></a> [edge\_zone](#input\_edge\_zone)
+
+Description: (Optional) Specifies the Edge Zone within the Azure Region where this Linux Virtual Machine should exist. Changing this forces a new Linux Virtual Machine to be created.
+
+Type: `string`
+
+Default: `null`
 
 ### <a name="input_enable_telemetry"></a> [enable\_telemetry](#input\_enable\_telemetry)
 
@@ -129,143 +279,329 @@ Type: `bool`
 
 Default: `true`
 
-### <a name="input_lock"></a> [lock](#input\_lock)
+### <a name="input_encryption_at_host_enabled"></a> [encryption\_at\_host\_enabled](#input\_encryption\_at\_host\_enabled)
 
-Description: Controls the Resource Lock configuration for this resource. The following properties can be specified:
+Description: (Optional) Should all of the disks (including the temp disk) attached to this Virtual Machine be encrypted by enabling Encryption at Host?
 
-- `kind` - (Required) The type of lock. Possible values are `\"CanNotDelete\"` and `\"ReadOnly\"`.
-- `name` - (Optional) The name of the lock. If not specified, a name will be generated based on the `kind` value. Changing this forces the creation of a new resource.
+Type: `bool`
+
+Default: `null`
+
+### <a name="input_eviction_policy"></a> [eviction\_policy](#input\_eviction\_policy)
+
+Description: (Optional) Specifies what should happen when the Virtual Machine is evicted for price reasons when using a Spot instance. Possible values are `Deallocate` and `Delete`. Changing this forces a new resource to be created.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_extensions_time_budget"></a> [extensions\_time\_budget](#input\_extensions\_time\_budget)
+
+Description: (Optional) Specifies the duration allocated for all extensions to start. The time duration should be between 15 minutes and 120 minutes (inclusive) and should be specified in ISO 8601 format. Defaults to `PT1H30M`.
+
+Type: `string`
+
+Default: `"PT1H30M"`
+
+### <a name="input_gallery_application"></a> [gallery\_application](#input\_gallery\_application)
+
+Description: - `automatic_upgrade_enabled` - (Optional) Specifies whether the version will be automatically updated for the VM when a new Gallery Application version is available in PIR/SIG. Defaults to `false`.
+- `configuration_blob_uri` - (Optional) Specifies the URI to an Azure Blob that will replace the default configuration for the package if provided.
+- `order` - (Optional) Specifies the order in which the packages have to be installed. Possible values are between `0` and `2147483647`. Defaults to `0`.
+- `tag` - (Optional) Specifies a passthrough value for more generic context. This field can be any valid `string` value.
+- `treat_failure_as_deployment_failure_enabled` - (Optional) Specifies whether any failure for any operation in the VmApplication will fail the deployment of the VM. Defaults to `false`.
+- `version_id` - (Required) Specifies the Gallery Application Version resource ID.
+
+Type:
+
+```hcl
+list(object({
+    automatic_upgrade_enabled                   = optional(bool, false)
+    configuration_blob_uri                      = optional(string)
+    order                                       = optional(number)
+    tag                                         = optional(string)
+    treat_failure_as_deployment_failure_enabled = optional(bool, false)
+    version_id                                  = string
+  }))
+```
+
+Default: `null`
+
+### <a name="input_identity"></a> [identity](#input\_identity)
+
+Description: - `identity_ids` - (Optional) Specifies a list of User Assigned Managed Identity IDs to be assigned to this Linux Virtual Machine.
+- `type` - (Required) Specifies the type of Managed Service Identity that should be configured on this Linux Virtual Machine. Possible values are `SystemAssigned`, `UserAssigned`, `SystemAssigned, UserAssigned` (to enable both).
 
 Type:
 
 ```hcl
 object({
-    kind = string
-    name = optional(string, null)
+    identity_ids = optional(set(string))
+    type         = string
   })
 ```
 
 Default: `null`
 
-### <a name="input_managed_identities"></a> [managed\_identities](#input\_managed\_identities)
+### <a name="input_license_type"></a> [license\_type](#input\_license\_type)
 
-Description: Controls the Managed Identity configuration on this resource. The following properties can be specified:
+Description: (Optional) Specifies the License Type for this Virtual Machine. Possible values are `RHEL_BYOS`, `RHEL_BASE`, `RHEL_EUS`, `RHEL_SAPAPPS`, `RHEL_SAPHA`, `RHEL_BASESAPAPPS`, `RHEL_BASESAPHA`, `SLES_BYOS`, `SLES_SAP`, `SLES_HPC`, `UBUNTU_PRO`.
 
-- `system_assigned` - (Optional) Specifies if the System Assigned Managed Identity should be enabled.
-- `user_assigned_resource_ids` - (Optional) Specifies a list of User Assigned Managed Identity resource IDs to be assigned to this resource.
+Type: `string`
+
+Default: `null`
+
+### <a name="input_max_bid_price"></a> [max\_bid\_price](#input\_max\_bid\_price)
+
+Description: (Optional) The maximum price you're willing to pay for this Virtual Machine, in US Dollars; which must be greater than the current spot price. If this bid price falls below the current spot price the Virtual Machine will be evicted using the `eviction_policy`. Defaults to `-1`, which means that the Virtual Machine should not be evicted for price reasons.
+
+Type: `number`
+
+Default: `-1`
+
+### <a name="input_os_image_notification"></a> [os\_image\_notification](#input\_os\_image\_notification)
+
+Description: - `timeout` - (Optional) Length of time a notification to be sent to the VM on the instance metadata server till the VM gets OS upgraded. The only possible value is `PT15M`. Defaults to `PT15M`.
 
 Type:
 
 ```hcl
 object({
-    system_assigned            = optional(bool, false)
-    user_assigned_resource_ids = optional(set(string), [])
+    timeout = optional(string, "PT15M")
   })
 ```
 
-Default: `{}`
+Default: `null`
 
-### <a name="input_private_endpoints"></a> [private\_endpoints](#input\_private\_endpoints)
+### <a name="input_os_managed_disk_id"></a> [os\_managed\_disk\_id](#input\_os\_managed\_disk\_id)
 
-Description: A map of private endpoints to create on this resource. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
+Description: (Optional) The ID of an existing OS Managed Disk which should be attached to this Virtual Machine. When using this field you must also specify `os_disk.caching`. Conflicts with `source_image_id` and `source_image_reference`.
 
-- `name` - (Optional) The name of the private endpoint. One will be generated if not set.
-- `role_assignments` - (Optional) A map of role assignments to create on the private endpoint. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time. See `var.role_assignments` for more information.
-- `lock` - (Optional) The lock level to apply to the private endpoint. Default is `None`. Possible values are `None`, `CanNotDelete`, and `ReadOnly`.
-- `tags` - (Optional) A mapping of tags to assign to the private endpoint.
-- `subnet_resource_id` - The resource ID of the subnet to deploy the private endpoint in.
-- `private_dns_zone_group_name` - (Optional) The name of the private DNS zone group. One will be generated if not set.
-- `private_dns_zone_resource_ids` - (Optional) A set of resource IDs of private DNS zones to associate with the private endpoint. If not set, no zone groups will be created and the private endpoint will not be associated with any private DNS zones. DNS records must be managed external to this module.
-- `application_security_group_resource_ids` - (Optional) A map of resource IDs of application security groups to associate with the private endpoint. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
-- `private_service_connection_name` - (Optional) The name of the private service connection. One will be generated if not set.
-- `network_interface_name` - (Optional) The name of the network interface. One will be generated if not set.
-- `location` - (Optional) The Azure location where the resources will be deployed. Defaults to the location of the resource group.
-- `resource_group_name` - (Optional) The resource group where the resources will be deployed. Defaults to the resource group of this resource.
-- `ip_configurations` - (Optional) A map of IP configurations to create on the private endpoint. If not specified the platform will create one. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
-  - `name` - The name of the IP configuration.
-  - `private_ip_address` - The private IP address of the IP configuration.
+Type: `string`
+
+Default: `null`
+
+### <a name="input_patch_assessment_mode"></a> [patch\_assessment\_mode](#input\_patch\_assessment\_mode)
+
+Description: (Optional) Specifies the mode of VM Guest Patching for the Virtual Machine. Possible values are `AutomaticByPlatform` or `ImageDefault`. Defaults to `ImageDefault`.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_patch_mode"></a> [patch\_mode](#input\_patch\_mode)
+
+Description: (Optional) Specifies the mode of in-guest patching to this Linux Virtual Machine. Possible values are `AutomaticByPlatform` and `ImageDefault`. Defaults to `ImageDefault`. For more information on patch modes please see the [product documentation](https://docs.microsoft.com/azure/virtual-machines/automatic-vm-guest-patching#patch-orchestration-modes).
+
+Type: `string`
+
+Default: `"ImageDefault"`
+
+### <a name="input_plan"></a> [plan](#input\_plan)
+
+Description: - `name` - (Required) Specifies the Name of the Marketplace Image this Virtual Machine should be created from. Changing this forces a new resource to be created.
+- `product` - (Required) Specifies the Product of the Marketplace Image this Virtual Machine should be created from. Changing this forces a new resource to be created.
+- `publisher` - (Required) Specifies the Publisher of the Marketplace Image this Virtual Machine should be created from. Changing this forces a new resource to be created.
 
 Type:
 
 ```hcl
-map(object({
-    name = optional(string, null)
-    role_assignments = optional(map(object({
-      role_definition_id_or_name             = string
-      principal_id                           = string
-      description                            = optional(string, null)
-      skip_service_principal_aad_check       = optional(bool, false)
-      condition                              = optional(string, null)
-      condition_version                      = optional(string, null)
-      delegated_managed_identity_resource_id = optional(string, null)
-    })), {})
-    lock = optional(object({
-      kind = string
-      name = optional(string, null)
-    }), null)
-    tags                                    = optional(map(string), null)
-    subnet_resource_id                      = string
-    private_dns_zone_group_name             = optional(string, "default")
-    private_dns_zone_resource_ids           = optional(set(string), [])
-    application_security_group_associations = optional(map(string), {})
-    private_service_connection_name         = optional(string, null)
-    network_interface_name                  = optional(string, null)
-    location                                = optional(string, null)
-    resource_group_name                     = optional(string, null)
-    ip_configurations = optional(map(object({
-      name               = string
-      private_ip_address = string
-    })), {})
-  }))
+object({
+    name      = string
+    product   = string
+    publisher = string
+  })
 ```
 
-Default: `{}`
+Default: `null`
 
-### <a name="input_private_endpoints_manage_dns_zone_group"></a> [private\_endpoints\_manage\_dns\_zone\_group](#input\_private\_endpoints\_manage\_dns\_zone\_group)
+### <a name="input_platform_fault_domain"></a> [platform\_fault\_domain](#input\_platform\_fault\_domain)
 
-Description: Whether to manage private DNS zone groups with this module. If set to false, you must manage private DNS zone groups externally, e.g. using Azure Policy.
+Description: (Optional) Specifies the Platform Fault Domain in which this Linux Virtual Machine should be created. Defaults to `-1`, which means this will be automatically assigned to a fault domain that best maintains balance across the available fault domains. Changing this forces a new Linux Virtual Machine to be created.
+
+Type: `number`
+
+Default: `-1`
+
+### <a name="input_priority"></a> [priority](#input\_priority)
+
+Description: (Optional) Specifies the priority of this Virtual Machine. Possible values are `Regular` and `Spot`. Defaults to `Regular`. Changing this forces a new resource to be created.
+
+Type: `string`
+
+Default: `"Regular"`
+
+### <a name="input_provision_vm_agent"></a> [provision\_vm\_agent](#input\_provision\_vm\_agent)
+
+Description: (Optional) Should the Azure VM Agent be provisioned on this Virtual Machine? Defaults to `true`. Changing this forces a new resource to be created.
 
 Type: `bool`
 
 Default: `true`
 
-### <a name="input_role_assignments"></a> [role\_assignments](#input\_role\_assignments)
+### <a name="input_proximity_placement_group_id"></a> [proximity\_placement\_group\_id](#input\_proximity\_placement\_group\_id)
 
-Description: A map of role assignments to create on this resource. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
+Description: (Optional) The ID of the Proximity Placement Group which the Virtual Machine should be assigned to.
 
-- `role_definition_id_or_name` - The ID or name of the role definition to assign to the principal.
-- `principal_id` - The ID of the principal to assign the role to.
-- `description` - The description of the role assignment.
-- `skip_service_principal_aad_check` - If set to true, skips the Azure Active Directory check for the service principal in the tenant. Defaults to false.
-- `condition` - The condition which will be used to scope the role assignment.
-- `condition_version` - The version of the condition syntax. Valid values are '2.0'.
-- `delegated_managed_identity_resource_id` - The delegated Azure Resource Id which contains a Managed Identity. Changing this forces a new resource to be created.
-- `principal_type` - The type of the principal\_id. Possible values are `User`, `Group` and `ServicePrincipal`. Changing this forces a new resource to be created. It is necessary to explicitly set this attribute when creating role assignments if the principal creating the assignment is constrained by ABAC rules that filters on the PrincipalType attribute.
+Type: `string`
 
-> Note: only set `skip_service_principal_aad_check` to true if you are assigning a role to a service principal.
+Default: `null`
+
+### <a name="input_reboot_setting"></a> [reboot\_setting](#input\_reboot\_setting)
+
+Description: (Optional) Specifies the reboot setting for platform scheduled patching. Possible values are `Always`, `IfRequired` and `Never`.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_secret"></a> [secret](#input\_secret)
+
+Description: - `key_vault_id` - (Required) The ID of the Key Vault from which all Secrets should be sourced.
+
+---
+`certificate` block supports the following:
+- `url` - (Required) The Secret URL of a Key Vault Certificate.
 
 Type:
 
 ```hcl
-map(object({
-    role_definition_id_or_name             = string
-    principal_id                           = string
-    description                            = optional(string, null)
-    skip_service_principal_aad_check       = optional(bool, false)
-    condition                              = optional(string, null)
-    condition_version                      = optional(string, null)
-    delegated_managed_identity_resource_id = optional(string, null)
-    principal_type                         = optional(string, null)
+list(object({
+    key_vault_id = string
+    certificate = set(object({
+      url = string
+    }))
   }))
 ```
 
-Default: `{}`
+Default: `null`
+
+### <a name="input_secure_boot_enabled"></a> [secure\_boot\_enabled](#input\_secure\_boot\_enabled)
+
+Description: (Optional) Specifies whether secure boot should be enabled on the virtual machine. Changing this forces a new resource to be created.
+
+Type: `bool`
+
+Default: `null`
+
+### <a name="input_source_image_id"></a> [source\_image\_id](#input\_source\_image\_id)
+
+Description: (Optional) The ID of the Image which this Virtual Machine should be created from. Changing this forces a new resource to be created. Possible Image ID types include `Image ID`s, `Shared Image ID`s, `Shared Image Version ID`s, `Community Gallery Image ID`s, `Community Gallery Image Version ID`s, `Shared Gallery Image ID`s and `Shared Gallery Image Version ID`s.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_source_image_reference"></a> [source\_image\_reference](#input\_source\_image\_reference)
+
+Description: - `offer` - (Required) Specifies the offer of the image used to create the virtual machines. Changing this forces a new resource to be created.
+- `publisher` - (Required) Specifies the publisher of the image used to create the virtual machines. Changing this forces a new resource to be created.
+- `sku` - (Required) Specifies the SKU of the image used to create the virtual machines. Changing this forces a new resource to be created.
+- `version` - (Required) Specifies the version of the image used to create the virtual machines. Changing this forces a new resource to be created.
+
+Type:
+
+```hcl
+object({
+    offer     = string
+    publisher = string
+    sku       = string
+    version   = string
+  })
+```
+
+Default: `null`
 
 ### <a name="input_tags"></a> [tags](#input\_tags)
 
-Description: (Optional) Tags of the resource.
+Description: (Optional) A mapping of tags which should be assigned to this Virtual Machine.
 
 Type: `map(string)`
+
+Default: `null`
+
+### <a name="input_termination_notification"></a> [termination\_notification](#input\_termination\_notification)
+
+Description: - `enabled` - (Required) Should the termination notification be enabled on this Virtual Machine?
+- `timeout` - (Optional) Length of time (in minutes, between `5` and `15`) a notification to be sent to the VM on the instance metadata server till the VM gets deleted. The time duration should be specified in ISO 8601 format. Defaults to `PT5M`.
+
+Type:
+
+```hcl
+object({
+    enabled = bool
+    timeout = optional(string, "PT5M")
+  })
+```
+
+Default: `null`
+
+### <a name="input_timeouts"></a> [timeouts](#input\_timeouts)
+
+Description: - `create` - (Optional) Specifies the timeout for create operations. Defaults to 45 minutes.
+- `delete` - (Optional) Specifies the timeout for delete operations. Defaults to 45 minutes.
+- `read` - (Optional) Specifies the timeout for read operations. Defaults to 5 minutes.
+- `update` - (Optional) Specifies the timeout for update operations. Defaults to 45 minutes.
+
+Type:
+
+```hcl
+object({
+    create = optional(string, "45m")
+    delete = optional(string, "45m")
+    read   = optional(string, "5m")
+    update = optional(string, "45m")
+  })
+```
+
+Default:
+
+```json
+{
+  "create": "45m",
+  "delete": "45m",
+  "read": "5m",
+  "update": "45m"
+}
+```
+
+### <a name="input_user_data"></a> [user\_data](#input\_user\_data)
+
+Description: (Optional) The Base64-Encoded User Data which should be used for this Virtual Machine.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_virtual_machine_scale_set_id"></a> [virtual\_machine\_scale\_set\_id](#input\_virtual\_machine\_scale\_set\_id)
+
+Description: (Optional) Specifies the Orchestrated Virtual Machine Scale Set that this Virtual Machine should be created within.
+
+Type: `string`
+
+Default: `null`
+
+### <a name="input_vm_agent_platform_updates_enabled"></a> [vm\_agent\_platform\_updates\_enabled](#input\_vm\_agent\_platform\_updates\_enabled)
+
+Description: n/a
+
+Type: `bool`
+
+Default: `null`
+
+### <a name="input_vtpm_enabled"></a> [vtpm\_enabled](#input\_vtpm\_enabled)
+
+Description: (Optional) Specifies whether vTPM should be enabled on the virtual machine. Changing this forces a new resource to be created.
+
+Type: `bool`
+
+Default: `null`
+
+### <a name="input_zone"></a> [zone](#input\_zone)
+
+Description: (Optional) Specifies the Availability Zones in which this Linux Virtual Machine should be located. Changing this forces a new Linux Virtual Machine to be created.
+
+Type: `string`
 
 Default: `null`
 
@@ -273,9 +609,37 @@ Default: `null`
 
 The following outputs are exported:
 
-### <a name="output_private_endpoints"></a> [private\_endpoints](#output\_private\_endpoints)
+### <a name="output_azapi_header"></a> [azapi\_header](#output\_azapi\_header)
 
-Description:   A map of the private endpoints created.
+Description: Post-operation outputs (add as needed by Type 5 tasks) output "post\_creation0" { value = local.post\_creation0 } output "post\_creation0\_sensitive\_body" { value = local.post\_creation0\_sensitive\_body; sensitive = true } output "post\_update1" { value = local.post\_update1 } output "post\_update1\_sensitive\_body" { value = local.post\_update1\_sensitive\_body; sensitive = true } output "post\_update2" { value = local.post\_update2 } output "post\_update2\_sensitive\_body" { value = local.post\_update2\_sensitive\_body; sensitive = true }
+
+### <a name="output_body"></a> [body](#output\_body)
+
+Description: n/a
+
+### <a name="output_locks"></a> [locks](#output\_locks)
+
+Description: n/a
+
+### <a name="output_replace_triggers_external_values"></a> [replace\_triggers\_external\_values](#output\_replace\_triggers\_external\_values)
+
+Description: n/a
+
+### <a name="output_retry"></a> [retry](#output\_retry)
+
+Description: n/a
+
+### <a name="output_sensitive_body"></a> [sensitive\_body](#output\_sensitive\_body)
+
+Description: n/a
+
+### <a name="output_sensitive_body_version"></a> [sensitive\_body\_version](#output\_sensitive\_body\_version)
+
+Description: n/a
+
+### <a name="output_timeouts"></a> [timeouts](#output\_timeouts)
+
+Description: n/a
 
 ## Modules
 

@@ -1,0 +1,46 @@
+Test Case: other_tags_updated
+================================================================================
+
+Step 5 Failed - Module Implementation Bug
+
+Error:
+╷
+│ Error: Failed to create/update resource
+│
+│   with azapi_resource.this,
+│   on azapi.tf line 38, in resource "azapi_resource" "this":
+│   38: resource "azapi_resource" "this" {
+│
+│ creating/updating Resource: (ResourceId
+│ "/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-341207/providers/Microsoft.Compute/virtualMachines/acctestVM-341207"
+│ / Api Version "2024-03-01"): PUT
+│ https://management.azure.com/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-341207/providers/Microsoft.Compute/virtualMachines/acctestVM-341207
+│ --------------------------------------------------------------------------------
+│ RESPONSE 400: 400 Bad Request
+│ ERROR CODE: InvalidParameter
+│ --------------------------------------------------------------------------------
+│ {
+│   "error": {
+│     "code": "InvalidParameter",
+│     "message": "The value of parameter imageReference.publisher is invalid.",
+│     "target": "imageReference.publisher"
+│   }
+│ }
+│ --------------------------------------------------------------------------------
+│
+╵
+
+Root Cause Analysis:
+The module does not correctly implement the source_image_reference.publisher and source_image_reference.offer fields. These fields need to be mapped to body.properties.storageProfile.imageReference.publisher and .offer, but the current module implementation does not do this correctly.
+
+Module Bug Reference:
+This is a known module implementation issue documented as Tasks #82, #83 in the test_cases.md file. Similar test cases (otherEdgeZone, otherGalleryApplicationRemoved) also fail with this same error.
+
+Impact:
+- Step 3 (State Migration) completed successfully with fixes
+- Step 4 (Cleanup) completed successfully  
+- Step 5 (Fresh Deployment) fails due to module bug
+- Cannot proceed with Step 5 until module is fixed
+
+Required Module Fix:
+The module's migrate_main.tf needs to be updated to properly handle source_image_reference fields and map them to the correct body structure for Azure API.

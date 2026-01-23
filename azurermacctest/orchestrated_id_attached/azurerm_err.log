@@ -1,0 +1,35 @@
+Test Case: orchestrated_id_attached
+================================================================================
+
+Step 2 Failed: Baseline AzureRM Configuration Drift Detected
+
+Initial Apply: SUCCESS
+- All resources created successfully
+- VM attached to orchestrated VMSS with zones = ["1"]
+
+Drift Verification: FAILED
+- terraform plan shows forced replacement of azurerm_linux_virtual_machine.test
+- Drift detected: zone = "1" -> null
+
+Root Cause Analysis:
+- The azurerm.tf does not specify a `zone` attribute for the VM
+- The orchestrated VMSS has zones = ["1"] configured
+- When the VM is attached to the zonal VMSS, Azure automatically assigns zone "1" to the VM
+- On subsequent terraform plan, Terraform detects that zone = "1" exists in actual state but is not in configuration
+- Terraform attempts to set zone to null, which forces replacement (zone is ForceNew field)
+
+This appears to be a known issue with azurerm_linux_virtual_machine when attached to zonal orchestrated VMSS:
+- The zone attribute is not explicitly set in configuration
+- Azure infers it from the VMSS
+- Terraform sees this as drift and attempts to "fix" it by removing the zone
+- This causes unnecessary resource recreation
+
+Failed Command: terraform plan -input=false
+Error Pattern: Resource recreation due to zone attribute drift
+
+Conclusion:
+This test case configuration has a fundamental issue in the baseline AzureRM setup. The configuration should either:
+1. Explicitly set zone = "1" on the VM to match the VMSS zone, OR
+2. This is a known AzureRM provider limitation with orchestrated VMSS zonal VMs
+
+The test case is INVALID because the baseline AzureRM configuration itself is not idempotent.

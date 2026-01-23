@@ -1,0 +1,28 @@
+Test Case: other_secure_boot_enabled
+================================================================================
+
+Step 2 Failed: AzureRM baseline validation failed
+
+Initial Error:
+During terraform apply, the VM creation failed with Azure ZonalAllocationFailed error:
+
+Error: creating Linux Virtual Machine (Subscription: "f7a632a5-49db-4c5e-9828-cd62cb753971"
+Resource Group Name: "acctestRG-154538"
+Virtual Machine Name: "acctestVM-154538"): polling after CreateOrUpdate: polling failed: the Azure API returned the following error:
+
+Status: "ZonalAllocationFailed"
+Code: ""
+Message: "Allocation failed. We do not have sufficient capacity for the requested VM size in this zone. Read more about improving likelihood of allocation success at http://aka.ms/allocation-guidance
+Try one of these alternative options to improve chance of allocation success:
+- Alternative VM sizes for the same region and zone: Standard_F1s."
+
+Root Cause:
+Azure infrastructure capacity constraint - insufficient capacity for VM size "Standard_B1ls" in zone "1" in eastus region.
+
+Failed Command:
+terraform apply -auto-approve -input=false
+
+This is an Azure platform capacity issue, not a module implementation error or random resource constraint error. The test configuration itself is valid but cannot be deployed due to Azure infrastructure limitations.
+
+Conclusion:
+According to Step 2 of the test workflow, this type of error (not related to random resource constraints but an infrastructure allocation failure) marks the test case as INVALID. The configuration cannot be properly validated as the baseline AzureRM deployment failed before completion.

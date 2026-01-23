@@ -1,0 +1,26 @@
+Test Case: network_multiple_public_template
+================================================================================
+
+Initial Error:
+╷
+│ Error: Unsupported attribute
+│
+│   on azapi.tf line 49, in resource "azapi_resource" "this":
+│   49:     for_each = can(module.replicator.azapi_header.identity) ? [module.replicator.identity] : []
+│     ├────────────────
+│     │ module.replicator is object with 8 attributes
+│
+│ This object does not have an attribute named "identity".
+╵
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The azapi.tf file references module.replicator.identity on line 49, but the module doesn't have a separate identity output. Identity is nested inside module.replicator.azapi_header.identity (confirmed by checking migrate_outputs.tf). Additionally, can() function returns true even when identity is null, so should use != null check instead.
+- Fix Method: Change line 49 from [module.replicator.identity] to [module.replicator.azapi_header.identity] and change condition from can() to != null check
+- Changes Made: 
+  * Line 49: Changed for_each = can(module.replicator.azapi_header.identity) ? [module.replicator.identity] : []
+             to for_each = module.replicator.azapi_header.identity != null ? [module.replicator.azapi_header.identity] : []
+- Result: Success! Plan showed acceptable drift (AzAPI resource-level attributes and Optional+Computed fields). After apply, second plan showed no changes.
+
+Final Result: Fix successful

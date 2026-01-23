@@ -1,0 +1,41 @@
+Test Case: image_from_existing_machine_prep
+================================================================================
+
+Step 2 Baseline Test Failed
+
+Failed Command: terraform apply -auto-approve -input=false
+
+Error:
+Error: decoding "admin_ssh_key.0.public_key" for public key data
+
+  with azurerm_linux_virtual_machine.source,
+  on azurerm.tf line 1, in resource "azurerm_linux_virtual_machine" "source":
+   1: resource "azurerm_linux_virtual_machine" "source" {
+
+Root Cause Analysis:
+The AzureRM provider (v4.57.0) failed to decode the SSH public key configured in the 
+admin_ssh_key block. The SSH key is defined in main.tf as local.first_public_key and 
+appears to be properly formatted (723 characters, ssh-rsa format).
+
+This is a baseline test failure - the original AzureRM configuration cannot be applied 
+successfully. This could be due to:
+1. A validation issue in the AzureRM provider version 4.57.0
+2. A formatting issue with the SSH key that wasn't detected in the original test suite
+3. Changes in SSH key validation requirements
+
+Since this is Step 2 (baseline validation) failure and not related to random resource 
+constraints, the test case should be marked as 'invalid' according to the test workflow.
+
+Infrastructure State:
+Partially created:
+- random_integer.number: Created
+- random_string.name: Created
+- azurerm_resource_group.test: Created
+- azurerm_virtual_network.test: Created
+- azurerm_subnet.test: Created
+- azurerm_network_interface.test: Created
+- azurerm_network_interface.public: Created
+- azurerm_public_ip.test: Created
+- azurerm_linux_virtual_machine.source: Failed to create
+
+Action Required: Run terraform destroy to clean up partial infrastructure.

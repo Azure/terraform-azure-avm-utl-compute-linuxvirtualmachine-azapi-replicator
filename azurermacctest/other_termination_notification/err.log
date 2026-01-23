@@ -1,0 +1,49 @@
+Test Case: other_termination_notification
+================================================================================
+
+Test Failed at Step 3: State Migration with Moved Blocks
+
+Initial Error:
+Persistent drift detected in terminateNotificationProfile.enable property - value converts from boolean (true) to string ("true") repeatedly.
+
+Terraform Plan Output:
+  ~ terminateNotificationProfile = {
+      ~ enable = true -> "true"
+      # (1 unchanged attribute hidden)
+    }
+
+Problem Analysis:
+The module is incorrectly passing a boolean value that gets converted to a string by the AzAPI provider or JSON encoding layer. Azure API schema expects type Bool for this property (confirmed via query_azapi_resource_schema), but the module's output is being encoded as a string.
+
+Drift Classification:
+This drift is NOT acceptable according to acceptable_drift_patterns.md:
+- Not an AzAPI resource-level attribute change (Section 1)
+- Not a removed default value pattern (Section 2)
+- This is an explicit configuration value type mismatch
+
+Module Implementation Error:
+Location: migrate_main.tf lines 433-442
+The code correctly assigns var.termination_notification.enabled (typed as bool) to the enable property:
+
+```
+terminateNotificationProfile = {
+  enable           = var.termination_notification.enabled
+  notBeforeTimeout = var.termination_notification.timeout
+}
+```
+
+However, somewhere in the JSON body construction or serialization process, this boolean is being converted to a string. The issue likely occurs in how the body is constructed using merge() operations and the jsonencode() function.
+
+Applied Fix:
+Applied the drift once to see if it normalizes, but the drift persists on subsequent plan, confirming this is a permanent module bug, not a one-time correction.
+
+Conclusion:
+Module has a fundamental implementation bug in handling boolean values for scheduledEventsProfile.terminateNotificationProfile.enable. The property should remain as boolean type but is being stringified. This requires a fix in the module's body construction logic to preserve boolean types correctly during JSON encoding.
+
+This is a CRITICAL bug because:
+1. It causes persistent drift on every terraform plan
+2. It violates Azure API schema type expectations
+3. It makes state migrations unreliable
+4. Similar boolean-to-string issues may exist in other properties
+
+Test Status: FAILED - Step 3

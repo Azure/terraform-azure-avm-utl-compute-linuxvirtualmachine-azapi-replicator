@@ -1,0 +1,41 @@
+Test Case: scaling_capacity_reservation_group_removed
+================================================================================
+
+Initial Error:
+│ Error: Missing required argument
+│
+│   on azapi.tf line 1, in module "replicator":
+│    1: module "replicator" {
+│
+│ The argument "resource_group_name" is required, but no definition was found.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The azapi.tf is using resource_group_id parameter but the module requires resource_group_name (string parameter, not ID)
+- Fix Method: Change resource_group_id to resource_group_name and pass azurerm_resource_group.test.name instead of .id
+- Changes Made: In azapi.tf line 5, changed from "resource_group_id = azurerm_resource_group.test.id" to "resource_group_name = azurerm_resource_group.test.name"
+- Result: Failed - module actually needs BOTH resource_group_id AND resource_group_name
+
+Attempt 2:
+- Problem Analysis: Module requires both resource_group_id (from migrate_variables.tf) and resource_group_name (from variables.tf)
+- Fix Method: Add both parameters to the module call
+- Changes Made: In azapi.tf, added both resource_group_id = azurerm_resource_group.test.id AND resource_group_name = azurerm_resource_group.test.name
+- Result: Failed - new error: identity attribute not found. The azapi_resource is trying to access module.replicator.identity which doesn't exist
+
+Attempt 3:
+- Problem Analysis: The dynamic identity block references module.replicator.identity which is not a separate output. Identity is part of azapi_header
+- Fix Method: Change the dynamic block to reference module.replicator.azapi_header.identity instead
+- Changes Made: In azapi.tf lines 48-53, changed dynamic block for_each and content to use azapi_header.identity
+- Result: Failed - identity.value.type error because identity is null in this test case
+
+Attempt 4:
+- Problem Analysis: The identity is null in this test case, but can() doesn't handle null properly in for_each
+- Fix Method: Use a proper null check instead of can()
+- Changes Made: Changed for_each condition from can() to module.replicator.azapi_header.identity != null
+- Result: Success! Plan shows only acceptable drifts according to acceptable_drift_patterns.md
+
+Final Result: Fix successful - All drifts are acceptable:
+- AzAPI provider implementation details (ignore_null_property, locks, replace_triggers_external_values, sensitive_body_version, output, type)
+- Body changes are Azure API computed default values being removed (Optional+Computed fields)
+- No resource recreation or unacceptable changes detected

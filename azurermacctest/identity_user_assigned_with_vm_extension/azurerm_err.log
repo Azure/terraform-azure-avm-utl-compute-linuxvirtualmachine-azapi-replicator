@@ -1,0 +1,40 @@
+Test Case: identity_user_assigned_with_vm_extension
+================================================================================
+
+Step 2 Failed: AzureRM Configuration Validation
+
+Failed Command:
+terraform apply -auto-approve -input=false
+
+Error Message:
+╷
+│ Error: Reference to undeclared resource
+│
+│   on main.tf line 96, in resource "azurerm_virtual_machine_extension" "test":
+│   96:   virtual_machine_id   = azapi_resource.this.id
+│
+│ A managed resource "azapi_resource" "this" has not been declared in the root module.
+╵
+
+Root Cause Analysis:
+The main.tf file contains an incorrect reference in the azurerm_virtual_machine_extension resource.
+Line 96 references `azapi_resource.this.id` when it should reference `azurerm_linux_virtual_machine.test.id`.
+
+This is a pre-existing error in the test case setup file (main.tf). The test case was configured 
+incorrectly, mixing AzAPI and AzureRM resource references in the baseline AzureRM configuration.
+
+Expected Reference:
+  virtual_machine_id = azurerm_linux_virtual_machine.test.id
+
+Actual Reference:
+  virtual_machine_id = azapi_resource.this.id
+
+Conclusion:
+The test case is invalid due to incorrect test setup. The main.tf file has a fundamental error
+that prevents the baseline AzureRM configuration from being applied. This is not a module 
+conversion issue but rather a test case configuration error. The test case cannot be used 
+for validation purposes until the main.tf file is corrected.
+
+According to test workflow Step 2: "If apply fails... mark test case as 'invalid' in test_cases.md"
+
+Test Status: INVALID (Test case configuration error)

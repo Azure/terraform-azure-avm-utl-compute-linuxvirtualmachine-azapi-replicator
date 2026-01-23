@@ -1,0 +1,11 @@
+Step 5 Failed: Fresh AzAPI deployment encountered error.
+
+Error: Failed to create/update resource - InvalidParameter
+Message: The value of parameter imageReference.publisher is invalid.
+Target: imageReference.publisher
+
+Analysis: The module's body generation appears to be missing the publisher and offer fields from imageReference
+when building the body for a fresh deployment. This worked in Step 3 (state migration) but fails in Step 5
+(fresh deployment), indicating the module may not be correctly handling source_image_reference for new deployments.
+
+This is a module implementation issue that prevents successful fresh deployment testing.

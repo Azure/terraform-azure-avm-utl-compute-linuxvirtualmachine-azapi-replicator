@@ -1,0 +1,27 @@
+Test Case: diskOSImportManagedDiskCleanup
+================================================================================
+
+Step 2 Failed: Baseline AzureRM configuration test
+
+Initial Error:
+Error: Invalid index
+
+  on azurerm.tf line 11, in resource "azurerm_linux_virtual_machine" "test":
+  11:   os_managed_disk_id = data.azurerm_managed_disks.test.disk.0.id
+    ├────────────────
+    │ data.azurerm_managed_disks.test.disk is empty list of object
+
+The given key does not identify an element in this collection value: the collection has no elements.
+
+Failed Command:
+terraform apply -auto-approve -input=false
+
+Root Cause Analysis:
+This test case is a "cleanup" test that depends on previous test cases (diskOSImportManagedDisk and diskOSImportManagedDiskWithSize) to have created a managed disk first. The configuration uses a data source `data.azurerm_managed_disks.test` to query for existing managed disks in the resource group, then references the first disk via `disk.0.id`.
+
+Since this test is run in isolation without the prerequisite tests having been executed (both prerequisite tests are marked as "invalid" in test_cases.md), the data source returns an empty list, causing the index error.
+
+Conclusion:
+This is not a valid standalone test case - it's a helper/cleanup test that depends on other tests. It should only be run as part of a test suite where the prerequisite tests execute first. Since the prerequisite tests (diskOSImportManagedDisk and diskOSImportManagedDiskWithSize) are both marked as "invalid", this cleanup test cannot be executed.
+
+Test Status: Invalid (dependent test case, cannot run standalone)

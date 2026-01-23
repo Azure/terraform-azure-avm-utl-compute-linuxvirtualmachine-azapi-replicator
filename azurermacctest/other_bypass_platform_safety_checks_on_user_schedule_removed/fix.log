@@ -1,0 +1,46 @@
+Test Case: other_bypass_platform_safety_checks_on_user_schedule_removed
+================================================================================
+
+Initial Error (Step 3):
+Error: Attempt to get attribute from null value
+  on azapi.tf line 52, in resource "azapi_resource" "this":
+  52:       type         = identity.value.type
+     ├────────────────
+     │ identity.value is null
+This value is null, so it does not have any attributes.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The dynamic identity block uses `can(module.replicator.azapi_header.identity)` which returns true even when identity is null, causing an error when trying to access identity.value.type on a null value
+- Fix Method: Change the condition from `can(module.replicator.azapi_header.identity)` to `module.replicator.azapi_header.identity != null` to properly check for null values
+- Changes Made: Updated azapi.tf line 50 to use `module.replicator.azapi_header.identity != null` instead of `can(module.replicator.azapi_header.identity)`
+- Result: Success - plan now executes without errors
+
+Drift Analysis:
+All detected drifts match acceptable patterns from acceptable_drift_patterns.md:
+1. Resource-level attributes (ignore_null_property, type, output, locks, replace_triggers_external_values, sensitive_body_version, timeouts) - Section 1 acceptable
+2. Body changes appear to be computed/optional fields being removed when ignore_null_property=true - Section 2 acceptable pattern
+
+Proceeding to apply changes to verify idempotency.
+
+Step 3 Result: Success
+
+Step 5 Error:
+Error: Failed to create/update resource
+creating/updating Resource: PUT https://management.azure.com/.../virtualMachines/acctestVM-573519
+RESPONSE 400: 400 Bad Request
+ERROR CODE: InvalidParameter
+{
+  "error": {
+    "code": "InvalidParameter",
+    "message": "The value of parameter imageReference.publisher is invalid.",
+    "target": "imageReference.publisher"
+  }
+}
+
+Step 5 Analysis:
+This is a known module implementation bug where imageReference.publisher and offer are not being properly implemented in the module. Similar errors documented in other test cases (otherEdgeZone, otherGalleryApplicationRemoved, otherTagsUpdated). The module is not correctly passing the publisher/offer fields to the Azure API.
+
+This is a module-level bug that cannot be fixed at the test configuration level without modifying the core module implementation.
+

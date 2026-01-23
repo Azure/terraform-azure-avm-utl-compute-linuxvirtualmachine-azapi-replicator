@@ -1,0 +1,98 @@
+Test Case: other_os_image_notification
+================================================================================
+
+Step 3: State Migration Test - UNACCEPTABLE DRIFT DETECTED
+
+Initial Error:
+Terraform plan after state migration shows unacceptable drift in 
+scheduledEventsProfile.osImageNotificationProfile.enable field:
+
+  ~ scheduledEventsProfile  = {
+      ~ osImageNotificationProfile   = {
+          ~ enable           = true -> "true"
+            # (1 unchanged attribute hidden)
+        }
+
+Analysis:
+- The drift shows a type change from boolean (true) to string ("true")
+- According to acceptable_drift_patterns.md, this is NOT an acceptable drift pattern
+- This drift is not covered by Section 1 (AzAPI resource-level attributes) 
+- This drift is not covered by Section 2 (removed default values)
+- This is an unacceptable property type change in the body attribute
+
+Root Cause:
+The module implementation in migrate_main.tf sets:
+  enable = true  (line 427)
+
+However, Azure API or the azapi provider is converting this boolean value to a string "true".
+
+This could be:
+1. A bug in the module where the enable field should be defined as string type
+2. An Azure API issue where it returns string instead of boolean
+3. An azapi provider serialization issue
+
+Module Implementation Location:
+File: migrate_main.tf
+Lines: 424-431
+Code:
+  scheduledEventsProfile = merge(
+    {
+      osImageNotificationProfile = var.os_image_notification != null ? {
+        enable           = true  # <-- This is boolean
+        notBeforeTimeout = var.os_image_notification.timeout
+        } : {
+        enable = false
+      }
+    },
+
+Expected Behavior:
+The enable field should remain as boolean type across state migration to avoid drift.
+
+Recommendation:
+Need to investigate whether Azure API expects boolean or string for this field.
+If string is required, module should be updated to use:
+  enable = "true"
+  
+If boolean is correct, need to investigate why the drift is occurring.
+
+================================================================================
+UPDATE: PERSISTENT DRIFT CONFIRMED - TEST FAILED
+================================================================================
+
+After applying the changes in Step 3, ran second terraform plan to verify idempotency.
+
+Result: PERSISTENT DRIFT - The same drift still appears:
+  ~ scheduledEventsProfile  = {
+      ~ osImageNotificationProfile   = {
+          ~ enable           = true -> "true"
+            # (1 unchanged attribute hidden)
+        }
+
+Azure API Schema Check:
+Queried Azure API schema for the enable field:
+  Resource: Microsoft.Compute/virtualMachines@2024-03-01
+  Path: body.properties.scheduledEventsProfile.osImageNotificationProfile.enable
+  Expected Type: Bool
+
+Analysis:
+- Azure API expects Bool type (confirmed via schema query)
+- Module sends boolean value: enable = true (line 427 of migrate_main.tf)
+- Azure API returns string value: "true"
+- This creates perpetual drift on every terraform plan
+
+Root Cause:
+This appears to be an Azure API serialization issue where the API accepts Bool but returns
+string. The module needs to be fixed to send string "true"/"false" instead of boolean 
+true/false to match what Azure API returns.
+
+Fix Required:
+Update migrate_main.tf line 427 and 430:
+  OLD: enable = true
+  NEW: enable = "true"
+  
+  OLD: enable = false  
+  NEW: enable = "false"
+
+Test Result: FAILED
+- Step 3 shows unacceptable persistent drift
+- Test cannot proceed to Step 4 without fixing this module bug
