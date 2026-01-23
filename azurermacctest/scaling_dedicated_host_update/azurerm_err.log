@@ -1,0 +1,26 @@
+Test Case: scalingDedicatedHostUpdate
+================================================================================
+
+Step 2 Failed: AzureRM Baseline Validation
+
+Failed Command:
+terraform apply -auto-approve -input=false
+
+Error Message:
+Error: creating Dedicated Host (Subscription: "f7a632a5-49db-4c5e-9828-cd62cb753971"
+Resource Group Name: "acctestRG-183129"
+Host Group Name: "acctestDHG-183129"
+Host Name: "acctestDH-183129"): performing CreateOrUpdate: unexpected status 409 (409 Conflict) with error: OperationNotAllowed: Operation could not be completed as it results in exceeding approved standardDSv3Family Cores quota. Additional details - Deployment Model: Resource Manager, Location: eastus, Current Limit: 65, Current Usage: 0, Additional Required: 80, (Minimum) New Limit Required: 80.
+
+Root Cause Analysis:
+The test case requires creating dedicated hosts which consume significant Azure compute quota (80 standardDSv3Family cores total). The subscription has a quota limit of 65 cores for standardDSv3Family in the eastus region, which is insufficient to provision the required dedicated host infrastructure. This is an Azure subscription quota constraint, not a Terraform configuration or module implementation issue.
+
+Conclusion:
+This test case cannot be executed on the current Azure subscription due to insufficient quota. The test is marked as INVALID because:
+1. The AzureRM baseline configuration itself fails to provision (Step 2 failed)
+2. The failure is due to Azure subscription quota limits, not configuration errors
+3. Increasing the quota requires subscription-level changes and cannot be resolved through Terraform configuration modifications
+4. The test case cannot proceed to validate AzAPI conversion without a successful AzureRM baseline
+
+Resolution Required:
+To enable this test case, the Azure subscription quota for standardDSv3Family cores in eastus region needs to be increased from 65 to at least 80 cores through Azure portal quota request process.

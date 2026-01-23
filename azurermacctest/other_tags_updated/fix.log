@@ -1,0 +1,47 @@
+Test Case: other_tags_updated
+================================================================================
+
+Initial Error:
+╷
+│ Error: Missing required argument
+│
+│   on azapi.tf line 1, in module "replicator":
+│    1: module "replicator" {
+│
+│ The argument "resource_group_name" is required, but no definition was found.
+╵
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The azapi.tf was using resource_group_id instead of resource_group_name. The module requires resource_group_name (a string), but resource_group_id was provided instead.
+- Fix Method: Changed resource_group_id = azurerm_resource_group.test.id to resource_group_name = azurerm_resource_group.test.name
+- Changes Made: Line 4 in azapi.tf - replaced resource_group_id with resource_group_name and changed .id to .name
+- Result: Failure - new error appeared: "The argument resource_group_id is required, but no definition was found."
+
+Attempt 2:
+- Problem Analysis: The module requires BOTH resource_group_name and resource_group_id. Checked migrate_variables.tf and found that resource_group_id is a separate required variable.
+- Fix Method: Added resource_group_id = azurerm_resource_group.test.id alongside resource_group_name
+- Changes Made: Added line 5 in azapi.tf: resource_group_id = azurerm_resource_group.test.id
+- Result: Failure - new error: "This object does not have an attribute named 'identity'" when trying to access module.replicator.identity
+
+Attempt 3:
+- Problem Analysis: The azapi.tf tries to access module.replicator.identity but the module doesn't export an identity output. Identity is embedded in azapi_header. Also, identity_ids format needs to be converted from userAssignedIdentities map.
+- Fix Method: Changed identity for_each to use module.replicator.azapi_header.identity and extract identity_ids from userAssignedIdentities keys
+- Changes Made: Line 53 and 55 in azapi.tf - changed module.replicator.identity to module.replicator.azapi_header.identity and updated identity_ids extraction logic
+- Result: Failure - "Attempt to get attribute from null value" because can() returns true even when identity is null
+
+Attempt 4:
+- Problem Analysis: The can() function returns true even when azapi_header.identity is null, causing the dynamic block to iterate over [null] instead of an empty list. Need proper null check.
+- Fix Method: Changed condition from can() to try(..., null) != null to properly detect when identity is actually null
+- Changes Made: Line 52 in azapi.tf - replaced can(module.replicator.azapi_header.identity) with try(module.replicator.azapi_header.identity, null) != null
+- Result: Success! Terraform plan now works for Step 3. Shows acceptable drifts (ignore_null_property, replace_triggers_external_values, sensitive_body_version, API version change from @2025-04-01 to @2024-03-01, output, locks, and body changes for Optional+Computed fields). Applied successfully and verified idempotency.
+
+Final Result for Step 3: Fix successful after 4 attempts
+
+Step 5 Fresh Deployment Attempt:
+- Initial Error: Step 5 fresh AzAPI deployment failed with Azure API error:
+  "InvalidParameter: The value of parameter imageReference.publisher is invalid."
+- Problem Analysis: This is a known module bug (Tasks #82, #83) where source_image_reference.publisher and .offer are not correctly implemented in the module body. The module is not setting these fields in the body's storageProfile.imageReference property.
+- Fix Attempts: This is a fundamental module implementation error that cannot be fixed by modifying azapi.tf alone. The module's main implementation needs to be corrected to properly map source_image_reference.publisher and .offer to body.properties.storageProfile.imageReference.
+- Result: Step 5 fails due to module implementation bug. This is documented in test_cases.md for similar test cases (otherEdgeZone, otherGalleryApplicationRemoved).

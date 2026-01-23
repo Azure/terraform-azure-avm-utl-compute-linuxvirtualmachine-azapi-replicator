@@ -1,0 +1,41 @@
+Test Case: other_reboot_setting_removed
+================================================================================
+
+Step 5 failed - Module Implementation Bug
+
+Error:
+Failed to create/update resource
+
+creating/updating Resource: (ResourceId
+"/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-3w33ej26/providers/Microsoft.Compute/virtualMachines/acctestVM-887132"
+/ Api Version "2024-03-01"): PUT
+https://management.azure.com/subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/acctestRG-3w33ej26/providers/Microsoft.Compute/virtualMachines/acctestVM-887132
+--------------------------------------------------------------------------------
+RESPONSE 400: 400 Bad Request
+ERROR CODE: InvalidParameter
+--------------------------------------------------------------------------------
+{
+  "error": {
+    "code": "InvalidParameter",
+    "message": "The value of parameter imageReference.publisher is invalid.",
+    "target": "imageReference.publisher"
+  }
+}
+
+Analysis:
+The module configuration includes:
+  source_image_reference = {
+    publisher = "Canonical"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts"
+    version   = "latest"
+  }
+
+However, Azure API returned InvalidParameter error for imageReference.publisher, indicating the module is not correctly implementing the source_image_reference conversion to the Azure API body format.
+
+This is a known module implementation bug, as the same error appears in the related test case "otherRebootSetting".
+
+Conclusion:
+This error cannot be fixed at the test case level by modifying azapi.tf, as the issue lies within the module's implementation of source_image_reference handling. The module is not properly constructing the imageReference object in the request body sent to Azure API.
+
+Note: Steps 1-4 (including state migration with moved blocks) completed successfully, indicating the module correctly handles state migration but fails on fresh deployments with source_image_reference.

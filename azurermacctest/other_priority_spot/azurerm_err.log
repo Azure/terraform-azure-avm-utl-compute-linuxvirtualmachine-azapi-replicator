@@ -1,0 +1,33 @@
+Test Case: other_priority_spot
+================================================================================
+
+Step 2 Failed: AzureRM Baseline Apply
+
+Initial Error:
+Error: creating Linux Virtual Machine (Subscription: "f7a632a5-49db-4c5e-9828-cd62cb753971"
+Resource Group Name: "acctestRG-683972"
+Virtual Machine Name: "acctestVM-683972"): performing CreateOrUpdate: unexpected status 409 (409 Conflict) with error:
+ SkuNotAvailable: The requested VM size for resource 'Following SKUs have failed for Capacity Restrictions: Standard_F2'
+ is currently not available in location 'eastus'. Please try another size or deploy to a different location or different
+ zone. See https://aka.ms/azureskunotavailable for details.
+
+Failed Command:
+terraform apply -auto-approve -input=false
+
+Root Cause Analysis:
+The Standard_F2 VM size is not available in the eastus location due to Azure capacity restrictions.
+This is an Azure platform capacity issue, not a Terraform configuration or random resource constraint issue.
+
+The test configuration specifies:
+- VM Size: Standard_F2
+- Location: eastus
+- Priority: Spot
+- Eviction Policy: Deallocate
+
+Since this is a capacity issue with the specific VM size in the region, and not related to random
+resource naming constraints (like storage account name length, computer name length, etc.), this test
+case cannot be fixed by adjusting random_string/random_integer parameters.
+
+Conclusion:
+Test case marked as INVALID due to Azure platform capacity limitations.
+This is not a Replicator Module issue - the baseline AzureRM configuration itself cannot be deployed.

@@ -1,0 +1,6 @@
+# No AzAPI conversion needed
+# This test case template contains only supporting infrastructure (resource_group, vnet, subnet)
+# and no azurerm_linux_virtual_machine resource to convert to the module.
+#
+# The template is used as a base for other orchestrated VMSS test cases that will
+# add the actual VM resources on top of this infrastructure.

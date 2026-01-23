@@ -1,0 +1,20 @@
+Test Case: disk_os_write_accelerator_enabled
+================================================================================
+
+Step: Step 2 - Verify AzureRM Configuration (Baseline Test)
+Command: terraform apply -auto-approve -input=false
+
+Error:
+creating Linux Virtual Machine (Subscription: "f7a632a5-49db-4c5e-9828-cd62cb753971"
+Resource Group Name: "acctestRG-172096"
+Virtual Machine Name: "acctestVM-172096"): performing CreateOrUpdate: unexpected status 409 (409 Conflict) with error:
+OperationNotAllowed: Operation could not be completed as it results in exceeding approved standardMSFamily Cores quota.
+Additional details - Deployment Model: Resource Manager, Location: eastus, Current Limit: 0, Current Usage: 0, Additional Required: 8, (Minimum) New Limit Required: 8.
+
+Root Cause:
+The test requires a Standard_M8ms VM size which belongs to the standardMSFamily. The Azure subscription has 0 quota for this VM family in the eastus region. The Standard_M8ms size is a memory-optimized VM specifically required for testing write accelerator features (which require Premium Storage and specific VM sizes).
+
+This is an environmental/subscription limitation, not a test configuration issue. The write accelerator feature requires M-series or certain other premium storage-capable VM sizes.
+
+Conclusion:
+Test case marked as invalid due to Azure subscription quota constraints. Cannot proceed with testing without quota increase for standardMSFamily in eastus region.

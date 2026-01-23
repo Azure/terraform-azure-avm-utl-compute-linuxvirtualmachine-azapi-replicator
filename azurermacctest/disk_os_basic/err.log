@@ -1,0 +1,53 @@
+Test Case: disk_os_basic
+================================================================================
+
+Step 3 Failed - Module Validation Cycle Error
+
+Initial Error (Step 3 - terraform plan after switching to AzAPI):
+╷
+│ Error: Cycle: module.replicator.var.priority (validation), module.replicator.var.eviction_policy (validation)
+│
+│
+╵
+╷
+│ Error: Cycle: module.replicator.var.patch_assessment_mode (validation), module.replicator.var.provision_vm_agent (validation), module.replicator.var.bypass_platform_safety_checks_on_user_schedule_enabled (validation), module.replicator.var.patch_mode (validation), module.replicator.var.os_managed_disk_id (validation)
+│
+│
+╵
+
+Failed Command:
+terraform plan -input=false
+
+Root Cause Analysis:
+This is a fundamental module design flaw causing validation cycles:
+
+Cycle 1 (priority ↔ eviction_policy):
+- var.priority validation references var.eviction_policy
+- var.eviction_policy validation references var.priority
+- Creates bidirectional dependency that Terraform cannot resolve
+
+Cycle 2 (patch-related variables):
+- Multiple variables (patch_assessment_mode, provision_vm_agent, bypass_platform_safety_checks_on_user_schedule_enabled, patch_mode, os_managed_disk_id) reference each other in their validation blocks
+- Creates a circular dependency chain
+
+Why This Cannot Be Fixed in Test Configuration:
+- This is a MODULE-LEVEL bug in variables.tf, not a test configuration issue
+- Terraform variable validation blocks can reference other variables (since Terraform 1.9+), but MUST NOT create circular dependencies
+- The azapi.tf file in the test directory correctly uses the module - the problem is in the module itself
+- Cannot be worked around by modifying azapi.tf without changing module source code
+
+Test Case Status: invalid
+Reason: Module validation cycle prevents ANY testing. All steps requiring terraform plan/apply with the module will fail until the module is fixed.
+
+Recommendation:
+Module maintainer must fix variables.tf by breaking the circular validations:
+1. For priority/eviction_policy: Choose ONE-WAY validation (e.g., only validate in eviction_policy, remove from priority)
+2. For patch variables: Identify and break the dependency chain by removing cross-references
+
+Related Test Cases with Same Issue:
+- authPassword
+- authPasswordAndSSH
+- authSSH
+- authEd25519SSH
+- linuxPatchModeSetting
+- All other test cases using this module

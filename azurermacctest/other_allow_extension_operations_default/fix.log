@@ -1,0 +1,41 @@
+Test Case: other_allow_extension_operations_default
+================================================================================
+
+Initial Error:
+Error: Unsupported attribute
+  on azapi.tf line 48, in resource "azapi_resource" "this":
+  48:     for_each = can(module.replicator.azapi_header.identity) ? [module.replicator.identity] : []
+     ├────────────────
+     │ module.replicator is object with 8 attributes
+This object does not have an attribute named "identity".
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The dynamic identity block references module.replicator.identity which doesn't exist as a separate output. Identity is nested inside module.replicator.azapi_header, not exposed as a direct output.
+- Fix Method: Change line 48 to use module.replicator.azapi_header.identity instead of module.replicator.identity
+- Changes Made: Updated azapi.tf line 48 from:
+    for_each = can(module.replicator.azapi_header.identity) ? [module.replicator.identity] : []
+  to:
+    for_each = can(module.replicator.azapi_header.identity) ? [module.replicator.azapi_header.identity] : []
+- Result: Failed with new error - "Attempt to get attribute from null value". The can() function returns true even when identity is null.
+
+Attempt 2:
+- Problem Analysis: The can() function doesn't check if the value is null, only if the attribute exists. Since identity is null in this test case (no identity block), we need to check for != null instead.
+- Fix Method: Change the condition from can() to use != null check
+- Changes Made: Updated azapi.tf line 48 from:
+    for_each = can(module.replicator.azapi_header.identity) ? [module.replicator.azapi_header.identity] : []
+  to:
+    for_each = module.replicator.azapi_header.identity != null ? [module.replicator.azapi_header.identity] : []
+- Result: Success - plan now runs without errors
+
+Plan Analysis:
+- Plan shows acceptable drifts only:
+  * AzAPI resource-level attributes (ignore_null_property, locks, replace_triggers_external_values, sensitive_body_version, output, type)
+  * Body structure changes - all removed/added fields are Azure API response fields (Optional + Computed)
+- All drifts match acceptable patterns in acceptable_drift_patterns.md
+- Proceeding to apply changes and verify idempotency
+
+Final Result: Fix successful
+
+

@@ -1,0 +1,23 @@
+Test Case: other_allow_extension_operations_disabled_without_vm_agent
+================================================================================
+
+Initial Error:
+Error: Attempt to get attribute from null value
+
+  on azapi.tf line 53, in resource "azapi_resource" "this":
+  53:       type         = identity.value.type
+     ├────────────────
+     │ identity.value is null
+
+This value is null, so it does not have any attributes.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The azurerm.tf.bak has no identity block, so module.replicator.azapi_header.identity is null. The can() function returns true for null values, causing the for_each to iterate with a null value.
+- Fix Method: Change the condition to check if identity is not null using try() with a default of null, then check if result is not null
+- Changes Made: Update dynamic identity block condition from `can(module.replicator.azapi_header.identity)` to `module.replicator.azapi_header.identity != null`
+- Result: Success - terraform plan now works and shows acceptable drifts only (ignore_null_property, locks, output, replace_triggers_external_values, sensitive_body_version, type, timeouts, and body properties that are Optional+Computed fields)
+
+Final Result: Fix successful - acceptable drift detected, will apply one-time update
+

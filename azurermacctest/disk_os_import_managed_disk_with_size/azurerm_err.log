@@ -1,0 +1,32 @@
+Test Case: diskOSImportManagedDiskWithSize
+================================================================================
+
+Step: Step 2 - Verify AzureRM Configuration (Baseline Test)
+
+Failed Command: terraform apply -auto-approve -input=false
+
+Error Message:
+│ Error: Invalid index
+│
+│   on azurerm.tf line 11, in resource "azurerm_linux_virtual_machine" "test":
+│   11:   os_managed_disk_id = data.azurerm_managed_disks.test.disk.0.id
+│     ├────────────────
+│     │ data.azurerm_managed_disks.test.disk is empty list of object
+│
+│ The given key does not identify an element in this collection value: the collection has no elements.
+
+Root Cause Analysis:
+This test case is part of a multi-step acceptance test sequence:
+1. TestAccLinuxVirtualMachine_diskOSImportManagedDiskUpdateSize first creates a VM with delete_os_disk_on_deletion = false
+2. Then removes the VM but keeps the OS disk 
+3. Finally imports that existing managed disk into a new VM (this test case)
+
+The test configuration expects an existing managed disk to already be present in the resource group (referenced via data.azurerm_managed_disks.test.disk.0.id), but when run as a standalone test, no disk exists.
+
+This test case cannot be run independently - it requires the managed disk to be created by a previous test step (diskOSBasicNoDelete) and left behind after VM deletion (osDiskImportTemplateWithProvider).
+
+Conclusion:
+This is NOT a module implementation error. The test case is designed as part of a sequential multi-step test and cannot be validated as a standalone configuration. The test extraction process has isolated a configuration that is inherently dependent on prior state from other test steps.
+
+Recommendation:
+Mark this test case as "invalid" for standalone testing. These import scenarios would need to be tested as complete sequences if import functionality is to be validated.

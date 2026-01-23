@@ -1,0 +1,50 @@
+Test Case: other_termination_notification_timeout
+================================================================================
+
+Test Failed at Step 3: State Migration with Moved Blocks
+
+Initial Error:
+Persistent drift detected in terminateNotificationProfile.enable property - value converts from boolean (true) to string ("true").
+
+Terraform Plan Output:
+  ~ scheduledEventsProfile  = {
+      ~ terminateNotificationProfile = {
+          ~ enable = true -> "true"
+          # (1 unchanged attribute hidden)
+        }
+    }
+
+Attempted Fix Methods:
+
+Attempt 1:
+- Problem Analysis: Module implementation bug in migrate_main.tf lines 433-442. The boolean value var.termination_notification.enabled is being converted to string during JSON body construction.
+- Fix Method: Investigated module source code
+- Result: Confirmed module bug, cannot be fixed at test configuration level
+
+Attempt 2:
+- Problem Analysis: Referenced previous test case (other_termination_notification) which documented the same issue. That test confirmed applying the drift doesn't resolve it - it persists on every plan.
+- Fix Method: Cannot fix at test level - module needs boolean type preservation fix
+- Result: Test must fail due to module implementation error
+
+Final Error:
+Same as initial error - boolean to string conversion in terminateNotificationProfile.enable
+
+Conclusion:
+Module has a fundamental implementation bug in handling boolean values for scheduledEventsProfile.terminateNotificationProfile.enable. The property should remain as boolean type but is being stringified during JSON encoding.
+
+This is a CRITICAL bug because:
+1. It causes persistent drift on every terraform plan
+2. It violates Azure API schema type expectations  
+3. It makes state migrations unreliable
+4. The same issue affects other_termination_notification test case
+
+Root Cause:
+The module's body construction uses merge() and jsonencode() operations. Somewhere in this process, boolean values are being converted to strings. The issue is NOT in variable assignment (line 435 correctly uses boolean var.termination_notification.enabled) but in the JSON serialization layer.
+
+Drift Classification:
+This drift is NOT acceptable according to acceptable_drift_patterns.md:
+- Not an AzAPI resource-level attribute change (Section 1)
+- Not a removed default value pattern (Section 2)  
+- This is an explicit configuration value type mismatch
+
+Test Status: FAILED - Step 3 (cannot proceed to Step 4 with unacceptable drift)

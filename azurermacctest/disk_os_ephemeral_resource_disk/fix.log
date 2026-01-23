@@ -1,0 +1,39 @@
+Test Case: disk_os_ephemeral_resource_disk
+================================================================================
+
+Initial Error:
+╷
+│ Error: Missing required argument
+│
+│   on azapi.tf line 1, in module "replicator":
+│    1: module "replicator" {
+│
+│ The argument "resource_group_name" is required, but no definition was found.
+╵
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The module call in azapi.tf uses `resource_group_id` but the module requires `resource_group_name`. The original azurerm.tf uses `resource_group_name = azurerm_resource_group.test.name`
+- Fix Method: Change module parameter from `resource_group_id = azurerm_resource_group.test.id` to `resource_group_name = azurerm_resource_group.test.name`
+- Changes Made: Modified line 5 in azapi.tf from `resource_group_id = azurerm_resource_group.test.id` to `resource_group_name = azurerm_resource_group.test.name`
+- Result: Still failed with same error about resource_group_id
+
+Attempt 2:
+- Problem Analysis: The module has TWO separate variable files: variables.tf (for public interface with resource_group_name) and migrate_variables.tf (with resource_group_id). Both are required. Similar successful test (auth_ssh_multiple) provides BOTH parameters.
+- Fix Method: Add both resource_group_name and resource_group_id parameters
+- Changes Made: Added both `resource_group_name = azurerm_resource_group.test.name` (line 5) and `resource_group_id = azurerm_resource_group.test.id` (line 6)
+- Result: Fixed missing argument error, but new error: "Attempt to get attribute from null value" on identity.value.type
+
+Attempt 3:
+- Problem Analysis: The identity dynamic block uses `can(module.replicator.azapi_header.identity)` which doesn't properly check for null. The successful test (auth_ssh_multiple) uses `!= null` instead. Also identity_ids handling differs - should use userAssignedIdentities keys.
+- Fix Method: Change identity block to match working test pattern
+- Changes Made: 
+  * Line 53: Changed `can(module.replicator.azapi_header.identity)` to `module.replicator.azapi_header.identity != null`
+  * Line 56: Changed `try(identity.value.identity_ids, null)` to `try(identity.value.userAssignedIdentities, null) != null ? keys(identity.value.userAssignedIdentities) : null`
+- Result: Success! Plan shows acceptable drifts (ignore_null_property, locks, replace_triggers_external_values, sensitive_body_version, output, type, timeouts) and computed/default values from Azure API.
+
+Final Result: Fix successful
+
+
+

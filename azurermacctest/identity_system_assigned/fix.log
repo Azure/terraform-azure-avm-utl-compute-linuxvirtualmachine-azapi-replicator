@@ -1,0 +1,22 @@
+Test Case: identity_system_assigned
+================================================================================
+
+Initial Error:
+After applying the AzAPI configuration in Step 3, the second terraform plan shows persistent drift on OS disk properties:
+- diskSizeGB: 30 -> null
+- name: "acctestVM-585355_disk1_9a670039b8104c9787dd7cf2ee7d651c" -> null
+- writeAcceleratorEnabled: false -> null
+
+These fields are Optional+Computed in AzureRM provider (not explicitly configured in azurerm.tf.bak).
+
+The issue is that the module is trying to set these fields to null in the body, but Azure keeps returning actual values, causing continuous drift.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The azapi.tf uses ignore_null_property = false, which means null values are sent to the API. For Optional+Computed fields like os_disk.name, os_disk.disk_size_gb, and os_disk.write_accelerator_enabled, these should not be explicitly set to null when not configured by the user.
+- Fix Method: Change ignore_null_property from false to true in azapi.tf. This tells the AzAPI provider to ignore null values in the body and not send them to the Azure API, allowing Azure to use its defaults for computed fields.
+- Changes Made: Modified azapi.tf line 45: ignore_null_property = false -> ignore_null_property = true
+- Result: Success! After applying the change and running terraform plan again, no drift is detected. The configuration is now idempotent.
+
+Final Result: Fix successful

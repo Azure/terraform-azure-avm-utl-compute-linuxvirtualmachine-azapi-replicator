@@ -1,0 +1,53 @@
+Test Case: identity_user_assigned_updated_with_vm_extension
+================================================================================
+
+Test marked as INVALID due to test extraction error
+
+Initial Error (after fixing resource_group_name):
+Error: Reference to undeclared resource
+  on main.tf line 96, in resource "azurerm_virtual_machine_extension" "test":
+   96:   virtual_machine_id   = azurerm_linux_virtual_machine.test.id
+A managed resource "azurerm_linux_virtual_machine" "test" has not been declared in the root module.
+
+Root Cause Analysis:
+The test extraction incorrectly placed the VM extension in main.tf instead of azurerm.tf.
+
+From the upstream test source (linux_virtual_machine_resource_identity_test.go lines 490-549),
+the identityUserAssignedUpdatedWithVMExtension test includes:
+1. Two user-assigned identities (lines 494-504)
+2. The Linux VM resource (lines 506-539)
+3. The VM extension (lines 541-547) that references the VM at line 543
+
+During test extraction:
+- CORRECT: The VM was extracted to azurerm.tf.bak
+- INCORRECT: The two identities were placed in main.tf (lines 82-92) instead of azurerm.tf
+- INCORRECT: The extension was placed in main.tf (lines 94-100) instead of azurerm.tf
+
+Impact:
+When the test switches from azurerm.tf to azapi.tf (renaming azurerm.tf to azurerm.tf.bak):
+- The VM resource definition disappears from the configuration
+- The extension in main.tf (line 96) still references "azurerm_linux_virtual_machine.test.id"
+- This reference becomes invalid because the resource is no longer declared
+
+Why This Cannot Be Fixed:
+1. The test guide specifies main.tf is "Trusted, DO NOT MODIFY"
+2. The extension should have been in azurerm.tf so it would move to azurerm.tf.bak during the switch
+3. This is a structural test setup issue, not a module implementation problem
+4. The similar test "identityUserAssignedWithVMExtension" is also marked as "invalid" in test_cases.md
+
+Comparison with Similar Test:
+The test "identity_user_assigned_with_vm_extension" (without "updated") has the same issue
+and is marked as "invalid". This suggests VM extension tests have systematic extraction problems.
+
+Attempted Fix:
+Attempt 1: Added missing "resource_group_name" parameter - SUCCESS
+Attempt 2: Cannot fix extension reference issue due to main.tf modification constraint
+
+Conclusion:
+This test case is INVALID due to incorrect test extraction. The VM extension and its
+dependencies should have been extracted into azurerm.tf, not main.tf. This is not a
+module implementation error but a test setup error that prevents proper migration testing.
+
+Recommendation:
+Re-extract this test case with the VM extension placed in azurerm.tf instead of main.tf,
+or create an extension.tf file that can be renamed along with azurerm.tf during the test.

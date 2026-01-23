@@ -1,0 +1,53 @@
+Test Case: scaling_capacity_reservation_group_update
+================================================================================
+
+Still failed after analysis
+
+Initial Error:
+Persistent configuration drift in capacity_reservation_group_id after state migration.
+The Azure API returns capacity reservation group ID with uppercase resource group name,
+but the module does not normalize this properly.
+
+Plan output shows:
+  ~ capacityReservation = {
+      ~ capacityReservationGroup = {
+          ~ id = "/subscriptions/.../resourceGroups/ACCTESTRG-351998/providers/..."
+                -> "/subscriptions/.../resourceGroups/acctestRG-351998/providers/..."
+        }
+    }
+
+This drift persists even after applying the changes multiple times.
+
+Root Cause Analysis:
+The module does not properly handle Azure API's resource ID case normalization.
+Azure ARM resource IDs are case-insensitive, but the Azure API may return them
+with different casing than what was used in the input. The module should either:
+
+1. Normalize all resource IDs to lowercase when storing in state, OR
+2. Use case-insensitive comparison for resource ID references, OR
+3. Implement a DiffSuppressFunc-like mechanism for capacity_reservation_group_id
+
+This is NOT an acceptable drift pattern according to acceptable_drift_patterns.md
+because it represents a configuration value that was explicitly set and should
+remain stable after the initial apply.
+
+Attempted Fix Methods:
+N/A - This is a fundamental module implementation issue that requires changes
+to the module's core resource ID handling logic, which is outside the scope
+of test case fixes (azapi.tf modifications).
+
+Final Error:
+Persistent drift in capacity_reservation_group_id due to case normalization
+issue between configuration and Azure API response.
+
+Conclusion:
+This is a module implementation bug. The capacity_reservation_group_id parameter
+needs proper resource ID normalization to handle Azure's case-insensitive resource
+ID behavior. Without this fix in the module itself, this test case cannot pass.
+
+The test correctly identifies a real functional issue: users who specify
+capacity_reservation_group_id will see perpetual drift in their configurations,
+requiring constant re-applies with no functional changes.
+
+Recommendation: Add resource ID normalization logic in the module for
+capacity_reservation_group_id and similar resource reference parameters.

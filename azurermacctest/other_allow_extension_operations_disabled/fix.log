@@ -1,0 +1,26 @@
+Test Case: other_allow_extension_operations_disabled
+================================================================================
+
+Initial Error:
+│ Error: Attempt to get attribute from null value
+│
+│   on azapi.tf line 48, in resource "azapi_resource" "this":
+│   48:       type         = identity.value.type
+│     ├────────────────
+│     │ identity.value is null
+│
+│ This value is null, so it does not have any attributes.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The dynamic identity block is using can() to check if identity exists, but can() returns true even when the value is null. This causes the dynamic block to iterate with a null value, leading to the error when trying to access identity.value.type.
+- Fix Method: Change the condition to check if the identity value is not null using != null instead of can()
+- Changes Made: Modified azapi.tf line 46 from:
+    for_each = can(module.replicator.azapi_header.identity) ? [module.replicator.azapi_header.identity] : []
+  to:
+    for_each = module.replicator.azapi_header.identity != null ? [module.replicator.azapi_header.identity] : []
+- Result: Success. Terraform plan now shows acceptable drift patterns only (resource-level attributes and Optional+Computed body fields).
+
+Final Result: Fix successful
+

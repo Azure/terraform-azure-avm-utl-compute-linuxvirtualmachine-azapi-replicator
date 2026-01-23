@@ -1,0 +1,31 @@
+Test Case: auth_ssh_multiple
+================================================================================
+
+Initial Error:
+Error: Missing required argument
+  on azapi.tf line 1, in module "replicator":
+   1: module "replicator" {
+The argument "resource_group_name" is required, but no definition was found.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The azapi.tf module call is using resource_group_id but the module requires resource_group_name parameter
+- Fix Method: Replace resource_group_id with resource_group_name and use azurerm_resource_group.test.name instead of .id
+- Changes Made: Changed line 5 in azapi.tf from "resource_group_id = azurerm_resource_group.test.id" to "resource_group_name = azurerm_resource_group.test.name"
+- Result: Failed - now asking for resource_group_id
+
+Attempt 2:
+- Problem Analysis: The module requires BOTH resource_group_id and resource_group_name (defined in migrate_variables.tf and variables.tf respectively)
+- Fix Method: Add both parameters to the module call
+- Changes Made: Added both resource_group_name and resource_group_id parameters to module call
+- Result: Failed - module code has duplicate key errors when handling multiple SSH keys for the same username
+
+Attempt 3:
+- Problem Analysis: Module code in migrate_main.tf has two locals (normalize_ssh_key and existing_ssh_keys_by_username) that use username as map key, which fails when multiple SSH keys exist for the same username
+- Fix Method: 
+  1. Changed normalize_ssh_key to use a composite key "${username}_${public_key}" instead of just username
+  2. Changed existing_ssh_keys_by_username to use ellipsis (...) to group multiple keys per username into a list
+  3. Updated effective_ssh_keys logic to handle the new data structures and compare new keys against list of existing keys
+- Changes Made: Modified migrate_main.tf lines 108, 123, and 130-152
+- Result: Testing...

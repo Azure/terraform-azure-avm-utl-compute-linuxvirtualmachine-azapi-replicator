@@ -1,0 +1,40 @@
+Test Case: disk_os_custom_size
+================================================================================
+
+Initial Error:
+Error: Cycle: module.replicator.var.eviction_policy (validation), module.replicator.var.priority (validation)
+Error: Cycle: module.replicator.var.bypass_platform_safety_checks_on_user_schedule_enabled (validation), module.replicator.var.patch_mode (validation), module.replicator.var.os_managed_disk_id (validation), module.replicator.var.patch_assessment_mode (validation), module.replicator.var.provision_vm_agent (validation)
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: Circular variable validation (Mutually Exclusive Deadlock). The module has validation cycles where variables reference each other in their validation blocks, creating circular dependencies that Terraform cannot resolve.
+  Cycle 1: eviction_policy ↔ priority
+  Cycle 2: bypass_platform_safety_checks_on_user_schedule_enabled → patch_mode → provision_vm_agent → patch_assessment_mode (and os_managed_disk_id references multiple of these)
+  
+- Fix Method: Break the cycles by making dependencies one-way, following common_terraform_error.md Section 1 guidance. Keep validation rules in downstream variables, remove from upstream variables.
+
+- Changes Made:
+  1. In variables.tf - variable "eviction_policy": Removed the validation block that references var.priority (lines 485-488), keeping only the self-validation that checks the value format.
+  
+  2. In variables.tf - variable "bypass_platform_safety_checks_on_user_schedule_enabled": Removed the validation block that references var.patch_mode (lines 337-340).
+  
+  3. In variables.tf - variable "provision_vm_agent": Removed the validation block that references var.patch_assessment_mode (lines 771-777).
+  
+  4. In variables.tf - variable "os_managed_disk_id": Removed three validation blocks that reference other variables:
+     - Line 199-201: validation referencing bypass_platform_safety_checks_on_user_schedule_enabled
+     - Line 204-206: validation referencing patch_assessment_mode
+     - Line 209-210: validation referencing patch_mode
+  
+  5. Fixed syntax error: Removed duplicate closing brace at line 198 that was accidentally left after the edit.
+  
+  The conflict validations are now only in the downstream variables (priority, patch_mode, patch_assessment_mode) which can reference the upstream variables without creating cycles.
+
+- Result: Success! Terraform plan now works. Detected acceptable drifts:
+  - Resource-level attributes (ignore_null_property, locks, replace_triggers_external_values, sensitive_body_version, output, type API version, timeouts) - all acceptable per Section 1 of acceptable_drift_patterns.md
+  - Body changes: All are Optional+Computed fields being removed/added by Azure API defaults (patchSettings, requireGuestProvisionSignal, secrets, scheduledEventsProfile, deleteOption, managedDisk.id, writeAcceleratorEnabled) - all acceptable per Section 2 of acceptable_drift_patterns.md
+  
+  Proceeding to apply and verify idempotency...
+
+Final Result: Fix successful - validation cycle broken, plan generates acceptable drifts only
+

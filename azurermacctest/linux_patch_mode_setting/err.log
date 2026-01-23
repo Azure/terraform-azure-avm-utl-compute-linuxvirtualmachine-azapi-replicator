@@ -1,0 +1,56 @@
+Test Case: linux_patch_mode_setting
+================================================================================
+
+Test Status: invalid
+Reason: Module validation cycle blocks testing - cannot proceed with Step 3
+
+Initial Error (Step 3 - terraform plan):
+╷
+│ Error: Cycle: module.replicator.var.eviction_policy (validation), module.replicator.var.priority (validation)
+│
+│
+╵
+╷
+│ Error: Cycle: module.replicator.var.bypass_platform_safety_checks_on_user_schedule_enabled (validation), module.replicator.var.patch_mode (validation), module.replicator.var.provision_vm_agent (validation), module.replicator.var.patch_assessment_mode (validation), module.replicator.var.os_managed_disk_id (validation)
+│
+│
+╵
+
+Failed Command:
+terraform plan -input=false
+
+Root Cause Analysis:
+The module has circular dependencies in variable validations:
+
+1. Cycle 1 (eviction_policy ↔ priority):
+   - variables.tf line 486: eviction_policy validation references var.priority
+   - variables.tf line 765: priority validation references var.eviction_policy
+   
+2. Cycle 2 (patch_mode ↔ bypass_platform_safety_checks_on_user_schedule_enabled ↔ provision_vm_agent ↔ patch_assessment_mode ↔ os_managed_disk_id):
+   - Multiple variables reference each other in their validation blocks
+   - Creates a circular dependency chain that Terraform cannot resolve
+
+This is a fundamental MODULE design issue, not a test configuration issue.
+
+Known Solution (from common_terraform_error.md Section 1):
+Break the cycle by making validation one-way:
+- For Cycle 1: Remove the validation from ONE variable (e.g., remove lines 764-767 from priority variable)
+- For Cycle 2: Identify dependency chain and remove cross-references to break the cycle
+
+Status: 
+Step 1 (cleanup): ✅ Completed
+Step 2 (baseline with azurerm.tf): ✅ Completed successfully
+  - terraform init: ✅ Success
+  - terraform apply: ✅ Success (5 resources created)
+  - terraform plan (idempotency check): ✅ Success (no drift)
+Step 3 (state migration with azapi.tf): ❌ Failed at plan stage due to module validation cycle
+Step 4: Blocked by Step 3 failure
+Step 5: Blocked by Step 3 failure
+
+Test Classification: INVALID
+- The baseline AzureRM configuration is valid and works correctly
+- The test failure is caused by module validation cycle errors, not test configuration
+- Cannot proceed with migration testing until module validation cycles are fixed
+- Multiple other test cases are also affected by this same module issue
+
+Note: Infrastructure from Step 2 is still running and needs to be destroyed manually.

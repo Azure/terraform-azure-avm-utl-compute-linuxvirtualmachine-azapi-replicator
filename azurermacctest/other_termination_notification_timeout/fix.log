@@ -1,0 +1,22 @@
+Test Case: other_termination_notification_timeout
+================================================================================
+
+Initial Error:
+Plan shows drift in terminateNotificationProfile.enable: true (bool) → "true" (string)
+This is an unacceptable drift pattern - type mismatch indicates module implementation error.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The module is converting boolean value to string for terminateNotificationProfile.enable field. The Azure API expects a boolean value but the module's body JSON encoding is producing a string.
+- Fix Method: Investigated module source code (migrate_main.tf lines 433-442). The code correctly assigns var.termination_notification.enabled as boolean, but somewhere in the JSON body construction/serialization, it's being stringified.
+- Changes Made: None - this is a module implementation bug, not fixable at test configuration level
+- Result: Confirmed this is the same bug documented in other_termination_notification test case
+
+Attempt 2:
+- Problem Analysis: This is a known module bug that affects terminateNotificationProfile.enable. The previous test case (other_termination_notification) confirmed that applying the drift doesn't resolve it - the drift persists on every plan.
+- Fix Method: Cannot be fixed at test level. Module needs to fix boolean-to-string conversion in body construction.
+- Changes Made: None
+- Result: Test must be marked as FAILED due to module implementation bug
+
+Final Result: Cannot fix - module implementation bug

@@ -1,0 +1,35 @@
+Test Case: scaling_proximity_placement_group
+================================================================================
+
+Initial Error:
+╷
+│ Error: Missing required argument
+│
+│   on azapi.tf line 1, in module "replicator":
+│    1: module "replicator" {
+│
+│ The argument "resource_group_id" is required, but no definition was found.
+╵
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The module requires resource_group_id parameter which is used by AzAPI to construct the parent_id. The azapi.tf file was missing this required parameter.
+- Fix Method: Add resource_group_id parameter to the module call, using azurerm_resource_group.test.id
+- Changes Made: Added line "resource_group_id = azurerm_resource_group.test.id" to module "replicator" block in azapi.tf
+- Result: Fixed, but revealed a new error with identity block
+
+Attempt 2:
+- Problem Analysis: The dynamic identity block is iterating over a null value. The can() function only checks if the attribute exists, not if it's null.
+- Fix Method: Add null check in the for_each condition
+- Changes Made: Updated dynamic identity block for_each to check both can() and != null
+- Result: Fixed! Plan succeeded with acceptable drifts.
+
+Drift Analysis:
+All detected drifts match acceptable patterns from acceptable_drift_patterns.md:
+1. ignore_null_property, locks, replace_triggers_external_values, sensitive_body_version, output, type, timeouts - All are AzAPI-specific attributes (Pattern #1)
+2. Body changes appear to be computed/default values that should be removed with ignore_null_property=true (Pattern #2)
+
+Proceeding to apply and verify idempotency.
+
+Final Result: Fixes successful - proceeding to apply

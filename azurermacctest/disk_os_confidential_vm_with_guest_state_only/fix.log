@@ -1,0 +1,87 @@
+Test Case: disk_os_confidential_vm_with_guest_state_only
+================================================================================
+
+Initial Error:
+Error: Inconsistent conditional result types
+
+  on ..\..\migrate_main.tf line 318, in locals:
+ 318:           var.vtpm_enabled != null ? {
+ 319:             securityType = "TrustedLaunch"
+ 320:             uefiSettings = {
+ 321:               vTpmEnabled = var.vtpm_enabled
+ 322:             }
+ 323:           } : {}
+     ├────────────────
+     │ var.vtpm_enabled is true
+
+The true and false result expressions must have consistent types. The 'true' value includes object attribute
+"securityType", which is absent in the 'false' value.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The securityProfile merge() was trying to merge objects with incompatible structures. One branch had only encryptionAtHost, the other had securityType and uefiSettings. This creates a type inconsistency error in Terraform.
+- Fix Method: Restructure securityProfile to avoid merge() and instead use a single object with all possible fields, using null values when not needed. Also added secure_boot_enabled which was missing from the implementation.
+- Changes Made: 
+  * Changed from merge() approach to a single conditional object
+  * Added secure_boot_enabled to the condition
+  * All fields (encryptionAtHost, securityType, uefiSettings) are now in same object
+  * securityType set to "TrustedLaunch" when vtpm_enabled or secure_boot_enabled is set
+  * uefiSettings includes both secureBootEnabled and vTpmEnabled
+- Result: Fixed! New error discovered.
+
+New Error after Attempt 1:
+Error: Unsupported attribute
+
+  on azapi.tf line 53, in resource "azapi_resource" "this":
+  53:     for_each = can(module.replicator.azapi_header.identity) ? [module.replicator.identity] : []
+     ├────────────────
+     │ module.replicator is object with 8 attributes
+
+This object does not have an attribute named "identity".
+
+Attempt 2:
+- Problem Analysis: The azapi.tf file checks if azapi_header.identity exists but then tries to reference module.replicator.identity (which doesn't exist). The identity is part of azapi_header, not a separate output.
+- Fix Method: Change the reference from module.replicator.identity to module.replicator.azapi_header.identity
+- Changes Made:
+  * Fixed line 53 in azapi.tf to use module.replicator.azapi_header.identity instead of module.replicator.identity
+- Result: Fixed but revealed another issue.
+
+New Error after Attempt 2:
+Error: Attempt to get attribute from null value
+
+  on azapi.tf line 55, in resource "azapi_resource" "this":
+  55:       type         = identity.value.type
+     ├────────────────
+     │ identity.value is null
+
+This value is null, so it does not have any attributes.
+
+Attempt 3:
+- Problem Analysis: The can() function returns true even when identity is null, so the dynamic block tries to iterate with a null value. Also, the identity structure uses userAssignedIdentities (as a map) not identity_ids.
+- Fix Method: Use a proper null check instead of can(), and extract identity_ids from userAssignedIdentities map keys
+- Changes Made:
+  * Changed condition from can(module.replicator.azapi_header.identity) to module.replicator.azapi_header.identity != null
+  * Changed identity_ids extraction to use keys(identity.value.userAssignedIdentities) to match the azapi_header structure
+- Result: Testing...
+
+
+
+Drift Analysis after Attempt 3:
+Plan shows changes, key drift:
+- securityType: "ConfidentialVM" -> "TrustedLaunch"
+
+This is NOT an acceptable drift - when os_disk.security_encryption_type is set to "VMGuestStateOnly" or "DiskWithVMGuestState", the VM-level securityProfile.securityType should be "ConfidentialVM", not "TrustedLaunch".
+
+Attempt 4:
+- Problem Analysis: The securityProfile.securityType logic was not considering os_disk.security_encryption_type. When security_encryption_type is set, securityType should be "ConfidentialVM", not "TrustedLaunch". This is documented in Task #48 notes.
+- Fix Method: Update the securityType logic to check for os_disk.security_encryption_type first, setting "ConfidentialVM" when present, otherwise "TrustedLaunch" for vtpm/secure_boot
+- Changes Made:
+  * Added os_disk.security_encryption_type to the securityProfile condition
+  * Changed securityType to use nested ternary: if security_encryption_type is set -> "ConfidentialVM", else if vtpm/secure_boot -> "TrustedLaunch", else null
+  * Added os_disk.security_encryption_type check to uefiSettings condition (Confidential VMs also need uefiSettings)
+- Result: Testing...
+
+- Result: Success! Plan shows no changes after apply. All drifts were acceptable (AzAPI metadata and Optional+Computed fields).
+
+Final Result: Fix successful after 4 attempts. All errors resolved, state migration completed successfully with idempotent configuration.

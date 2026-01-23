@@ -1,0 +1,32 @@
+Test Case: other_gallery_application_removed
+================================================================================
+
+Step 5 Failed: Fresh AzAPI Deployment Test
+
+Error:
+Failed to create/update resource
+
+Error Code: InvalidParameter
+Error Message: The value of parameter imageReference.publisher is invalid.
+Target: imageReference.publisher
+
+Root Cause Analysis:
+The module is not properly implementing the source_image_reference.publisher and source_image_reference.offer fields in the body. According to the error, these fields are being set in the body but Azure API is rejecting them as invalid.
+
+This appears to be a known module implementation issue as noted in test_cases.md line 181 for the `otherEdgeZone` test case, which mentions "module bug - imageReference.publisher/offer not implemented in module".
+
+The azurerm.tf.bak shows the VM uses:
+source_image_reference {
+  publisher = "Canonical"
+  offer     = "0001-com-ubuntu-server-jammy"
+  sku       = "22_04-lts"
+  version   = "latest"
+}
+
+The module should be setting these values correctly in the body, but Azure is rejecting them as invalid, suggesting the module is not properly translating these fields to the AzAPI format.
+
+Failed Command:
+terraform apply -auto-approve -input=false
+
+Conclusion:
+This is a module implementation bug that prevents the module from correctly handling source_image_reference.publisher and source_image_reference.offer fields. The test must be marked as "test failed" as this represents a fundamental issue with the module's ability to create VMs with custom image references.

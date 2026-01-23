@@ -1,0 +1,26 @@
+Test Case: other_hibernation
+================================================================================
+
+Initial Error:
+Error: Attempt to get attribute from null value
+
+  on azapi.tf line 56, in resource "azapi_resource" "this":
+  56:       type         = identity.value.type
+    ├────────────────
+    │ identity.value is null
+
+This value is null, so it does not have any attributes.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The dynamic identity block uses can() to check if module.replicator.azapi_header.identity exists, but can() returns true even when the value is null. Then accessing identity.value.type fails because the value is null.
+- Fix Method: Change the for_each condition to properly check for null values using != null instead of can()
+- Changes Made: Change line 54 from:
+    for_each = can(module.replicator.azapi_header.identity) ? [module.replicator.azapi_header.identity] : []
+  To:
+    for_each = module.replicator.azapi_header.identity != null ? [module.replicator.azapi_header.identity] : []
+- Result: Success. Terraform plan now succeeds and shows acceptable drift only (ignore_null_property, locks, output, replace_triggers_external_values, sensitive_body_version, type, timeouts).
+
+Final Result: Fix successful
+

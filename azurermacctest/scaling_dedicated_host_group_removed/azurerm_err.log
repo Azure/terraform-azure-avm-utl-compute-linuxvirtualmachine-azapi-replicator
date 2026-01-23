@@ -1,0 +1,22 @@
+Test Case: scaling_dedicated_host_group_removed
+================================================================================
+
+Step 2 Failed: AzureRM Baseline Test
+
+Failed Command: terraform apply -auto-approve -input=false
+
+Error:
+creating Dedicated Host (Subscription: "f7a632a5-49db-4c5e-9828-cd62cb753971"
+Resource Group Name: "acctestRG-710391"
+Host Group Name: "acctestDHG2-710391"
+Host Name: "acctestDH2-710391"): performing CreateOrUpdate: unexpected status 409 (409 Conflict) with error: OperationNotAllowed: Operation could not be completed as it results in exceeding approved standardDSv3Family Cores quota. Additional details - Deployment Model: Resource Manager, Location: eastus, Current Limit: 65, Current Usage: 0, Additional Required: 80, (Minimum) New Limit Required: 80.
+
+Root Cause Analysis:
+The test requires a Dedicated Host resource with SKU "DSv3-Type3", which requires 80 cores. 
+The Azure subscription has a quota limit of 65 cores for standardDSv3Family in the East US region.
+This is a subscription quota limitation, not a test configuration issue.
+
+Conclusion:
+This test case cannot be executed with the current subscription quota. The test is marked as "invalid" because the baseline AzureRM configuration fails due to infrastructure limitations beyond the scope of the migration testing.
+
+Test Status: invalid

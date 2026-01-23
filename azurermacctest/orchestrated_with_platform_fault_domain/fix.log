@@ -1,0 +1,53 @@
+Test Case: orchestrated_with_platform_fault_domain
+================================================================================
+
+Initial Error:
+Error: Missing required argument
+
+  on azapi.tf line 1, in module "replicator":
+   1: module "replicator" {
+
+The argument "resource_group_name" is required, but no definition was found.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The module call is missing the required "resource_group_name" parameter. The original azurerm resource used azurerm_resource_group.test.name
+- Fix Method: Add resource_group_name parameter to module call with value azurerm_resource_group.test.name
+- Changes Made: Added line "resource_group_name = azurerm_resource_group.test.name" after source declaration
+- Result: Fixed, but revealed new error
+
+New Error:
+Error: Unsupported attribute
+
+  on azapi.tf line 48, in resource "azapi_resource" "this":
+   48:     for_each = can(module.replicator.azapi_header.identity) ? [module.replicator.identity] : []
+
+This object does not have an attribute named "identity".
+
+Attempt 2:
+- Problem Analysis: The identity dynamic block references module.replicator.identity which doesn't exist. Should reference module.replicator.azapi_header.identity instead
+- Fix Method: Change [module.replicator.identity] to [module.replicator.azapi_header.identity]
+- Changes Made: Updated line 48 in azapi.tf
+- Result: Fixed, but revealed new error
+
+New Error:
+Error: Attempt to get attribute from null value
+
+  on azapi.tf line 50, in resource "azapi_resource" "this":
+   50:       type         = identity.value.type
+
+This value is null, so it does not have any attributes.
+
+Attempt 3:
+- Problem Analysis: The azapi_header.identity exists but is null. The can() function returns true but the value is null. Need to check for both existence and non-null
+- Fix Method: Add null check to for_each condition: can(...) && ... != null
+- Changes Made: Updated line 48 to include "&& module.replicator.azapi_header.identity != null"
+- Result: Success - Plan shows acceptable drifts only
+
+Drift Analysis:
+All detected drifts are acceptable per acceptable_drift_patterns.md:
+- ignore_null_property, locks, replace_triggers_external_values, sensitive_body_version, output, type, timeouts - Pattern 1 (AzAPI resource-level attributes)
+- Body changes (added null fields, removed computed defaults) - Pattern 2 (Azure API response fields)
+
+Final Result: Fix successful

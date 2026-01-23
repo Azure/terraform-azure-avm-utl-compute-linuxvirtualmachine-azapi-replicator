@@ -1,0 +1,38 @@
+Test Case: image_from_plan
+================================================================================
+
+Step 2 Failed: AzureRM Baseline Validation
+
+Failed Command:
+terraform apply -auto-approve -input=false
+
+Error Message:
+ResourcePurchaseValidationFailed: User failed validation to purchase resources. 
+Error message: 'Offer with PublisherId: 'cloudwhizsolutions', OfferId: 
+'jenkins-docker-container-with-ubuntu-server' cannot be purchased due to validation errors.
+
+The 'unknown' payment instrument(s) is not supported for offer with OfferId: 
+'jenkins-docker-container-with-ubuntu-server', PlanId 'jenkins-docker-container-with-ubuntu-server-cw'.
+
+The offer with PublisherId: 'cloudwhizsolutions', OfferId: 
+'jenkins-docker-container-with-ubuntu-server' and PlanId: 
+'jenkins-docker-container-with-ubuntu-server-cw' cannot be used on selected 
+subscription to purchase paid marketplace offers. Please choose another subscription 
+or update this one to allow purchases.
+
+Root Cause Analysis:
+This test case requires a paid marketplace image from CloudWhiz Solutions. The Azure 
+subscription being used does not support purchasing paid marketplace offers - likely 
+a free tier or sponsorship subscription with purchasing restrictions.
+
+This is an environmental constraint, not a module implementation issue. The test 
+cannot proceed as the baseline AzureRM configuration itself cannot be deployed.
+
+Conclusion:
+Test case is INVALID due to Azure subscription limitations preventing purchase of 
+required marketplace image. This test would require either:
+1. An Azure subscription with purchasing enabled and payment method configured
+2. A different marketplace image that doesn't require purchase
+3. Pre-acceptance of the marketplace agreement by a subscription administrator
+
+The test cannot validate AzAPI migration as the baseline cannot be established.

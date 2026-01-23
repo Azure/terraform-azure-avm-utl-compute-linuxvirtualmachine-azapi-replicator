@@ -1,0 +1,61 @@
+Test Case: disk_os_storage_account_type
+================================================================================
+
+Initial Error:
+Error: Attempt to get attribute from null value
+
+  on azapi.tf line 51, in resource "azapi_resource" "this":
+  51:       type         = identity.value.type
+    ├────────────────
+    │ identity.value is null
+
+This value is null, so it does not have any attributes.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The dynamic identity block is iterating over a list that contains null when identity is not configured. The can() function on line 49 is checking if the identity attribute exists, but when it exists and is null, the list becomes [null] instead of being empty.
+- Fix Method: Change the for_each condition to explicitly check for null and only create the block when identity is not null
+- Changes Made: Updated line 49 from `for_each = can(module.replicator.azapi_header.identity) ? [module.replicator.azapi_header.identity] : []` to `for_each = try(module.replicator.azapi_header.identity, null) != null ? [module.replicator.azapi_header.identity] : []`
+- Result: Success - terraform plan now works. Detected drift, analyzing against acceptable_drift_patterns.md
+
+Drift Analysis:
+All detected drifts are acceptable according to acceptable_drift_patterns.md:
+
+1. ✅ `ignore_null_property`: false -> true (Pattern #1 - always acceptable)
+2. ✅ `locks`: added [] (Pattern #1 - always acceptable)
+3. ✅ `output`: changed (Pattern #1 - always acceptable)
+4. ✅ `replace_triggers_external_values`: added (Pattern #1 - always acceptable)
+5. ✅ `sensitive_body_version`: added (Pattern #1 - always acceptable)
+6. ✅ `type`: API version change 2025-04-01 -> 2024-03-01 (Pattern #1 - always acceptable)
+7. ✅ `timeouts`: added (Pattern #1 - timeouts are config-level, not body-level changes)
+
+Body changes (properties):
+8. ✅ `availabilitySet`: added null (Pattern #2 - Optional+Computed field)
+9. ✅ `capacityReservation`: added null (Pattern #2 - Optional+Computed field)
+10. ✅ `diagnosticsProfile.bootDiagnostics.storageUri`: added "" (Pattern #2 - Optional+Computed field)
+11. ✅ `evictionPolicy`: added null (Pattern #2 - Optional+Computed field)
+12. ✅ `host`: added null (Pattern #2 - Optional+Computed field)
+13. ✅ `hostGroup`: added null (Pattern #2 - Optional+Computed field)
+14. ✅ `licenseType`: added null (Pattern #2 - Optional+Computed field)
+15. ✅ `osProfile.linuxConfiguration.patchSettings`: removed (Pattern #2 - Optional+Computed, Azure-provided defaults)
+16. ✅ `osProfile.requireGuestProvisionSignal`: removed true (Pattern #2 - Optional+Computed field)
+17. ✅ `osProfile.secrets`: removed [] (Pattern #2 - Optional+Computed field)
+18. ✅ `proximityPlacementGroup`: added null (Pattern #2 - Optional+Computed field)
+19. ✅ `scheduledEventsProfile`: added (Pattern #2 - Optional+Computed field)
+20. ✅ `securityProfile`: added null (Pattern #2 - Optional+Computed field)
+21. ✅ `storageProfile.imageReference.offer`: removed "0001-com-ubuntu-server-jammy" (Pattern #2 - computed, already in plan)
+22. ✅ `storageProfile.imageReference.publisher`: removed "Canonical" (Pattern #2 - computed, already in plan)
+23. ✅ `storageProfile.osDisk.deleteOption`: removed "Detach" (Pattern #2 - Optional+Computed field)
+24. ✅ `storageProfile.osDisk.diffDiskSettings`: added null (Pattern #2 - Optional+Computed field)
+25. ✅ `storageProfile.osDisk.diskSizeGB`: 30 -> null (Pattern #2 - Optional+Computed field)
+26. ✅ `storageProfile.osDisk.managedDisk.id`: removed (Pattern #2 - Computed field)
+27. ✅ `storageProfile.osDisk.name`: removed (Pattern #2 - Optional+Computed, auto-generated)
+28. ✅ `storageProfile.osDisk.writeAcceleratorEnabled`: false -> null (Pattern #2 - Optional+Computed field)
+29. ✅ `userData`: added null (Pattern #2 - Optional+Computed field)
+30. ✅ `zones`: added null (Pattern #2 - Optional+Computed field)
+
+All drifts match acceptable patterns. Proceeding with apply and idempotency verification.
+
+Final Result: Fix successful
+

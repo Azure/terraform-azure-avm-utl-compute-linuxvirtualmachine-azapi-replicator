@@ -1,0 +1,30 @@
+resource "azurerm_linux_virtual_machine" "source" {
+  name                            = "acctestsourceVM-${random_integer.number.result}"
+  resource_group_name             = azurerm_resource_group.test.name
+  location                        = azurerm_resource_group.test.location
+  size                            = "Standard_F2"
+  admin_username                  = local.admin_username
+  disable_password_authentication = false
+  admin_password                  = local.admin_password
+
+  network_interface_ids = [
+    azurerm_network_interface.public.id,
+  ]
+
+  admin_ssh_key {
+    username   = local.admin_username
+    public_key = local.first_public_key
+  }
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts"
+    version   = "latest"
+  }
+}

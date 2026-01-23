@@ -1,0 +1,30 @@
+Test Case: network_multiple_public_removed
+================================================================================
+
+Initial Error:
+Error: Unsupported attribute
+  on azapi.tf line 50, in resource "azapi_resource" "this":
+  50:     for_each = can(module.replicator.azapi_header.identity) ? [module.replicator.identity] : []
+     ├────────────────
+     │ module.replicator is object with 8 attributes
+This object does not have an attribute named "identity".
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The azapi.tf file references module.replicator.identity which doesn't exist as a separate output. Identity is actually nested inside module.replicator.azapi_header.identity (as confirmed in migrate_main.tf lines 10-15). Additionally, the structure uses userAssignedIdentities (camelCase) not identity_ids.
+- Fix Method: Change line 50 from [module.replicator.identity] to [module.replicator.azapi_header.identity] and update identity_ids reference to extract keys from userAssignedIdentities object.
+- Changes Made: 
+  * Line 50: Changed for_each = can(module.replicator.azapi_header.identity) ? [module.replicator.identity] : [] 
+             to for_each = can(module.replicator.azapi_header.identity) ? [module.replicator.azapi_header.identity] : []
+  * Line 53: Changed identity_ids = try(identity.value.identity_ids, null) 
+             to identity_ids = try(identity.value.userAssignedIdentities, null) != null ? keys(identity.value.userAssignedIdentities) : null
+- Result: Testing...
+
+Attempt 2:
+- Problem Analysis: The for_each condition uses can() which doesn't properly handle null values. Since identity is null for this VM (no identity configured), we need to check for null explicitly instead of using can().
+- Fix Method: Change the for_each condition from can(module.replicator.azapi_header.identity) to module.replicator.azapi_header.identity != null
+- Changes Made:
+  * Line 50: Changed for_each = can(module.replicator.azapi_header.identity) ? [module.replicator.azapi_header.identity] : []
+             to for_each = module.replicator.azapi_header.identity != null ? [module.replicator.azapi_header.identity] : []
+- Result: Testing...

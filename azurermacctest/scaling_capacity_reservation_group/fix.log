@@ -1,0 +1,62 @@
+Test Case: scaling_capacity_reservation_group
+================================================================================
+
+Initial Error:
+Terraform plan shows continuous drift after state migration (Step 3):
+  ~ capacityReservationGroup = {
+      ~ id = "/subscriptions/.../resourceGroups/ACCTESTRG-168424/providers/..." 
+          -> "/subscriptions/.../resourceGroups/acctestRG-168424/providers/..."
+    }
+
+Azure API returns the resource group name in uppercase (ACCTESTRG-168424) while
+the input has mixed case (acctestRG-168424).
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: Azure API returns capacity_reservation_group_id with uppercase
+  resource group name, causing perpetual drift. AzureRM provider uses 
+  DiffSuppressFunc: suppress.CaseDifference to handle this, but AzAPI doesn't 
+  have equivalent functionality for body properties.
+  
+- Fix Method: Apply lower() function to capacity_reservation_group_id in 
+  migrate_main.tf to normalize casing
+  
+- Changes Made: 
+  File: migrate_main.tf, line 306-310
+  Changed:
+    capacityReservation = var.capacity_reservation_group_id != null ? {
+      capacityReservationGroup = {
+        id = var.capacity_reservation_group_id
+      }
+    } : null
+  To:
+    capacityReservation = var.capacity_reservation_group_id != null ? {
+      capacityReservationGroup = {
+        id = lower(var.capacity_reservation_group_id)
+      }
+    } : null
+    
+- Result: Failure - Applying lower() makes the entire ID lowercase, but Azure
+  API still returns it with mixed case (e.g., "resourceGroups" with capital G).
+  The drift persists because Azure's casing doesn't match all-lowercase.
+
+Analysis:
+The core issue is that Azure API returns resource IDs with specific casing that 
+doesn't match either the input or the all-lowercase version. The AzureRM provider
+handles this with DiffSuppressFunc which performs case-insensitive comparisons,
+but AzAPI provider's body attribute doesn't support case-insensitive comparison
+for nested properties.
+
+This represents a limitation in the AzAPI provider's ability to replicate 
+AzureRM's DiffSuppressFunc behavior for resource ID properties in the request body.
+
+Conclusion:
+Cannot fix this drift with current AzAPI provider capabilities. The provider needs
+either:
+1. An ignore_casing option for body properties, or
+2. Built-in case-insensitive comparison for Azure resource IDs, or  
+3. A way to specify DiffSuppressFunc-like behavior for specific body paths
+
+This is a fundamental limitation when migrating from AzureRM to AzAPI for resources
+that use resource IDs with Azure's inconsistent casing behavior.

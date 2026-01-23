@@ -1,0 +1,23 @@
+Test Case: auth_ssh
+================================================================================
+
+Initial Error:
+Error: Operation failed
+
+  on ..\..\variables.tf line 265, in variable "admin_password":
+ 265:     condition     = try(var.disable_password_authentication, true) || var.admin_password != null
+    ├────────────────
+    │ var.disable_password_authentication is null
+
+Error during operation: argument must not be null.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The module validation at line 265 fails when disable_password_authentication is null. The azurerm.tf doesn't explicitly set this parameter, but when using SSH keys without password, it defaults to true in AzureRM provider behavior. The module needs this explicitly set.
+- Fix Method: Add disable_password_authentication = true to the module call in azapi.tf
+- Changes Made: Added line "disable_password_authentication = true" to module.replicator block
+- Result: Success - terraform plan now works. Detected drifts are all acceptable per acceptable_drift_patterns.md (Section 1 resource-level attributes and Section 2 computed field defaults)
+
+Final Result: Fix successful
+

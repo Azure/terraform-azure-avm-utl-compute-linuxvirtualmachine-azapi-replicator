@@ -1,0 +1,20 @@
+Test Case: scaling_dedicated_host
+================================================================================
+
+Failed Command: terraform apply -auto-approve -input=false
+
+Error Message:
+Error: creating Dedicated Host (Subscription: "f7a632a5-49db-4c5e-9828-cd62cb753971"
+Resource Group Name: "acctestRG-766253"
+Host Group Name: "acctestDHG-766253"
+Host Name: "acctestDH-766253"): performing CreateOrUpdate: unexpected status 409 (409 Conflict) with error: OperationNotAllowed: Operation could not be completed as it results in exceeding approved standardDSv3Family Cores quota. Additional details - Deployment Model: Resource Manager, Location: eastus, Current Limit: 65, Current Usage: 0, Additional Required: 80, (Minimum) New Limit Required: 80.
+
+Root Cause Analysis:
+The test case requires creating an Azure Dedicated Host which requires 80 cores of standardDSv3Family quota. The current subscription has a quota limit of 65 cores in the eastus region, which is insufficient to create the dedicated host resource.
+
+This is an Azure subscription quota limitation, not a configuration issue with the AzureRM provider or the test case itself.
+
+Resolution:
+This test case is marked as "invalid" because it cannot be executed in the current subscription without requesting a quota increase. The test case configuration is valid but cannot be verified due to infrastructure constraints.
+
+Test Status: Invalid (Azure quota limitation)

@@ -1,0 +1,29 @@
+Test Case: orchestrated_id_un_attached
+================================================================================
+
+Initial Error:
+│ Error: Attempt to get attribute from null value
+│
+│   on azapi.tf line 49, in resource "azapi_resource" "this":
+│   49:       type         = identity.value.type
+│     ├────────────────
+│     │ identity.value is null
+│
+│ This value is null, so it does not have any attributes.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The dynamic identity block is using can() to check if identity exists, but can() returns true even for null values. When the module doesn't provide an identity (because the original azurerm config has no identity block), the value is null, causing the error.
+- Fix Method: Added an additional check for null in the for_each condition: `can(module.replicator.azapi_header.identity) && module.replicator.azapi_header.identity != null`
+- Changes Made: 
+  Line 47: Changed from `for_each = can(module.replicator.azapi_header.identity) ? [module.replicator.azapi_header.identity] : []`
+  To: `for_each = can(module.replicator.azapi_header.identity) && module.replicator.azapi_header.identity != null ? [module.replicator.azapi_header.identity] : []`
+- Result: Success - Error resolved. Plan now shows acceptable drift:
+  * Resource-level attribute changes (ignore_null_property, locks, etc.) - all acceptable per acceptable_drift_patterns.md
+  * Body structure changes (removed computed defaults like patchSettings, ssh.publicKeys, etc.) - acceptable as these are Optional+Computed fields
+  * All drifts match acceptable patterns in acceptable_drift_patterns.md
+  * Proceeding to apply and verify idempotency
+
+Final Result: Fix successful
+

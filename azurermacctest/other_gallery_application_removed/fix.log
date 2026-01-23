@@ -1,0 +1,29 @@
+Test Case: other_gallery_application_removed
+================================================================================
+
+Initial Error:
+Error: Attempt to get attribute from null value
+
+  on azapi.tf line 52, in resource "azapi_resource" "this":
+  52:       type         = identity.value.type
+    ├────────────────
+    │ identity.value is null
+
+This value is null, so it does not have any attributes.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The dynamic identity block is using can(module.replicator.azapi_header.identity) to check if identity exists, but can() returns true even when the value is null. This causes the for_each to include a null value, leading to the error when trying to access identity.value.type.
+- Fix Method: Replace can() with a proper null check using != null operator
+- Changes Made: Changed line 50 from `for_each = can(module.replicator.azapi_header.identity) ? [module.replicator.azapi_header.identity] : []` to `for_each = module.replicator.azapi_header.identity != null ? [module.replicator.azapi_header.identity] : []`
+- Result: Success - terraform plan now runs without errors
+
+Drift Analysis:
+All detected drifts are acceptable according to acceptable_drift_patterns.md:
+- AzAPI resource-level attributes (ignore_null_property, locks, replace_triggers_external_values, sensitive_body_version, output, type) - Pattern 1
+- Body changes removing null/default values for Optional+Computed fields - Pattern 2
+- Timeouts block addition - Acceptable
+
+Final Result: Fix successful
+

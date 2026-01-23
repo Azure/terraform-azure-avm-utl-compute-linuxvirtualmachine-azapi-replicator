@@ -1,0 +1,39 @@
+Test Case: other_vtpm_enabled
+================================================================================
+
+Test Failed at: Step 2 - Baseline Verification (AzureRM Apply)
+
+Failed Command:
+terraform apply -auto-approve -input=false
+
+Error Message:
+Error: creating Linux Virtual Machine (Subscription: "f7a632a5-49db-4c5e-9828-cd62cb753971"
+Resource Group Name: "acctestRG-453032"
+Virtual Machine Name: "acctestVM-453032"): polling after CreateOrUpdate: polling failed: the Azure API returned the following error:
+
+Status: "ZonalAllocationFailed"
+Code: ""
+Message: "Allocation failed. We do not have sufficient capacity for the requested VM size in this zone. Read more about improving likelihood of allocation success at http://aka.ms/allocation-guidance
+Try one of these alternative options to improve chance of allocation success:
+- Alternative VM sizes for the same region and zone: Standard_F1s."
+
+Root Cause Analysis:
+This is an Azure platform capacity issue, not a Terraform configuration error. The test uses:
+- VM Size: Standard_B1ls
+- Region: eastus
+- Zone: 1
+
+The Azure platform does not have capacity for Standard_B1ls in zone 1 of eastus region at the time of testing. This is an infrastructure/environmental limitation, not a test case configuration issue.
+
+Impact:
+- Test case marked as "invalid" because baseline AzureRM configuration cannot be validated
+- The test configuration itself is correct per AzureRM provider test specifications
+- Cannot proceed to AzAPI migration testing without successful baseline validation
+
+Cleanup Status:
+Partial cleanup completed with orphaned disk remaining:
+- Resource Group deletion failed due to orphaned OS disk:
+  /subscriptions/f7a632a5-49db-4c5e-9828-cd62cb753971/resourceGroups/ACCTESTRG-453032/providers/Microsoft.Compute/disks/acctestVM-453032_OsDisk_1_4289f1da46114751bea5c34b1148cb54
+
+Recommendation:
+This test case should be retried at a later time or with a different region/zone configuration that has available capacity. The test case configuration is valid but cannot be executed due to current Azure capacity constraints.

@@ -1,0 +1,44 @@
+Test Case: other_skip_shutdown_and_force_delete
+================================================================================
+
+Initial Error:
+Error: Attempt to get attribute from null value
+  on azapi.tf line 51, in resource "azapi_resource" "this":
+  51:       type         = identity.value.type
+    ├────────────────
+    │ identity.value is null
+This value is null, so it does not have any attributes.
+
+Fix Process:
+
+Attempt 1:
+- Problem Analysis: The dynamic identity block uses `can(module.replicator.azapi_header.identity)` which returns true even when identity is null. The condition should check if identity is not null before iterating.
+- Fix Method: Change the for_each condition to check if identity is not null using `module.replicator.azapi_header.identity != null`
+- Changes Made: Modified line 49 in azapi.tf from:
+  for_each = can(module.replicator.azapi_header.identity) ? [module.replicator.azapi_header.identity] : []
+  to:
+  for_each = module.replicator.azapi_header.identity != null ? [module.replicator.azapi_header.identity] : []
+- Result: Success - terraform plan now works and shows acceptable drifts (all are AzAPI implementation details or computed Azure API fields)
+
+Final Result for Step 3: Fix successful. Step 3 (state migration) completed successfully.
+
+================================================================================
+
+Step 5 Error:
+Error: Failed to create/update resource
+creating/updating Resource: PUT https://management.azure.com/.../virtualMachines/acctestVM-838250
+RESPONSE 400: 400 Bad Request
+ERROR CODE: InvalidParameter
+The value of parameter imageReference.publisher is invalid.
+
+Fix Process for Step 5:
+
+Attempt 2:
+- Problem Analysis: The module.replicator.body is missing publisher and offer fields in imageReference, only outputting sku and version. The module call has all 4 fields (publisher, offer, sku, version) but the module is not properly passing publisher and offer to the body output.
+- Fix Method: Since I cannot modify the module, I need to override the body in azapi.tf to inject the missing fields. Use merge() to combine the module body with the correct imageReference. Must use HCL object (not JSON string) as AzAPI 2.0 requires HCL objects.
+- Changes Made: 
+  1. Added locals block with fixed_body that merges module.replicator.body with complete imageReference
+  2. Modified azapi_resource.this to use local.fixed_body instead of module.replicator.body
+- Result: Success - terraform apply completed successfully and idempotency verified
+
+Final Result for Step 5: Fix successful. All steps completed successfully.

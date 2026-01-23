@@ -1,0 +1,30 @@
+Test Case: other_allow_extension_operations_enabled_without_vm_agent
+================================================================================
+
+Test Phase: Step 2 - Verify AzureRM Configuration (Baseline Test)
+Test Result: INVALID
+
+Failed Command:
+terraform apply -auto-approve -input=false
+
+Error Message:
+Error: `allow_extension_operations` cannot be set to `true` when `provision_vm_agent` is set to `false`
+
+  with azurerm_linux_virtual_machine.test,
+  on azurerm.tf line 1, in resource "azurerm_linux_virtual_machine" "test":
+   1: resource "azurerm_linux_virtual_machine" "test" {
+
+Root Cause Analysis:
+This test case represents an INVALID configuration in the AzureRM provider itself. The provider enforces a validation rule that prevents `allow_extension_operations = true` when `provision_vm_agent = false`. This is a logical constraint: extension operations require the VM agent to be present, so you cannot allow extension operations when the VM agent is not provisioned.
+
+The test configuration in azurerm.tf has:
+- provision_vm_agent = false
+- allow_extension_operations = true
+
+This combination violates the AzureRM provider's built-in validation rules and cannot be deployed even with the AzureRM provider, making it an invalid test case for migration testing.
+
+Conclusion:
+This test case should be marked as INVALID because the original AzureRM configuration itself cannot be applied successfully. The baseline validation (Step 2) failed as expected, and this test case cannot proceed to migration testing.
+
+Cleanup Status:
+All partially created resources have been successfully destroyed via `terraform destroy -auto-approve -input=false`.

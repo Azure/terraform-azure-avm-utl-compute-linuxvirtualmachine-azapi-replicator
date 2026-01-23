@@ -1,0 +1,41 @@
+Test Case: image_from_shared_image_gallery
+================================================================================
+
+Step 2 Failed: Baseline AzureRM Configuration Validation
+
+Failed Command: terraform apply -auto-approve -input=false
+
+Error Message:
+╷
+│ Error: decoding "admin_ssh_key.0.public_key" for public key data
+│
+│   with azurerm_linux_virtual_machine.test,
+│   on azurerm.tf line 1, in resource "azurerm_linux_virtual_machine" "test":
+│    1: resource "azurerm_linux_virtual_machine" "test" {
+│
+╵
+
+Root Cause Analysis:
+The AzureRM resource configuration has an issue with the admin_ssh_key block. The error
+"decoding admin_ssh_key.0.public_key for public key data" indicates that the public key
+provided in local.first_public_key is not being properly decoded or validated by the
+AzureRM provider.
+
+The resource has both:
+- disable_password_authentication = false
+- admin_ssh_key block with public_key = local.first_public_key
+
+This is a baseline test failure - the original AzureRM configuration itself is invalid
+or has compatibility issues with the current AzureRM provider version (v4.57.0).
+
+The public key format in main.tf appears to be valid SSH-RSA format, but the provider
+is unable to decode it properly. This could be due to:
+1. Provider version incompatibility with the test case
+2. Changes in public key validation logic in newer AzureRM provider versions
+3. Issue with the public key format itself
+
+Conclusion:
+This is a baseline validation failure. The original AzureRM test configuration cannot
+be successfully applied, which indicates the test case is invalid for the current
+provider versions. The test cannot proceed to AzAPI migration validation since the
+baseline is not functional.

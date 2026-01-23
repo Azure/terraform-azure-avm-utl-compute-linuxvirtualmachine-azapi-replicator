@@ -1,0 +1,51 @@
+# Test Execution Report: azurermacctest/networkMultipleTemplate
+========================================================================
+
+**Test Case**: network_multiple_template
+**Date**: 2026-01-06 12:43:54
+**Tester**: AI Automated Tester
+**Mode**: Non-interactive
+
+## Summary
+
+Test case **CANNOT BE EXECUTED** using the standard test workflow.
+
+## Reason
+
+The 
+etworkMultipleTemplate test case is a **template-only helper function** that:
+- Only contains infrastructure setup (network interfaces, virtual networks, subnets)
+- Does NOT contain any zurerm_linux_virtual_machine resource
+- Does NOT have zurerm.tf or zapi.tf.bak files to test
+- Serves as a shared configuration used by other test cases (e.g., networkMultiple)
+
+## Directory Structure
+
+The test directory contains:
+- main.tf - Provider config and network infrastructure only
+- README.md - Documentation explaining this is a template-only case
+- terraform.tfstate, terraform.tfstate.backup - Previous state files
+
+## Files NOT Present (Expected for Regular Tests)
+
+- ❌ azurerm.tf - No VM resource to extract
+- ❌ azapi.tf.bak - No VM resource to convert
+- ❌ moved.tf.bak - No resource migration needed
+
+## Test Status Update
+
+Updated test_cases.md to reflect:
+**Status**: N/A - Template only (no VM resource, no azurerm.tf/azapi.tf.bak to test)
+
+## Recommendation
+
+This test case should remain marked as "N/A - Template only" and does not require 
+the standard 5-step test workflow. The actual VM test cases (like networkMultiple) 
+that USE this template should be tested instead.
+
+## Conclusion
+
+No testing action taken. Test case correctly identified as non-testable template.
+
+========================================================================
+End of Report
