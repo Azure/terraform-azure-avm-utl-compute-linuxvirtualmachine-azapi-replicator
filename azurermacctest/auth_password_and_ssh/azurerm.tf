@@ -4,7 +4,7 @@ resource "azurerm_linux_virtual_machine" "test" {
   location            = azurerm_resource_group.test.location
   size                = "Standard_F2"
   admin_username      = "adminuser"
-  admin_password      = "P@$$w0rd1234!"
+  admin_password                  = local.admin_password
   network_interface_ids = [
     azurerm_network_interface.test.id,
   ]

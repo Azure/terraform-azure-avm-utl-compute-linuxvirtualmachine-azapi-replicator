@@ -5,7 +5,7 @@ resource "azurerm_linux_virtual_machine" "test" {
   size                            = "Standard_F2"
   admin_username                  = "adminuser"
   disable_password_authentication = false
-  admin_password                  = "P@$$w0rd1234!"
+  admin_password                  = local.admin_password
   source_image_id                 = "/communityGalleries/${azurerm_shared_image_gallery.test.sharing.0.community_gallery.0.name}/images/${azurerm_shared_image_version.test.image_name}/versions/${azurerm_shared_image_version.test.name}"
 
   network_interface_ids = [

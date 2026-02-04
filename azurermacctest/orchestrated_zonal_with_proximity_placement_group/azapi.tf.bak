@@ -7,7 +7,7 @@ module "replicator" {
   location                        = azurerm_resource_group.test.location
   size                            = "Standard_F2"
   admin_username                  = "adminuser"
-  admin_password                  = "P@ssw0rd1234!"
+  admin_password                  = local.admin_password
   admin_password_version          = 1
   disable_password_authentication = false
 
