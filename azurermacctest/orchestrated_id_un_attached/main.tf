@@ -12,6 +12,10 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.0"
     }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0"
+    }
   }
 }
 
@@ -31,6 +35,8 @@ provider "azapi" {}
 
 provider "random" {}
 
+provider "tls" {}
+
 resource "random_string" "name" {
   length  = 8
   special = false
@@ -40,6 +46,30 @@ resource "random_string" "name" {
 resource "random_integer" "number" {
   min = 100000
   max = 999999
+}
+
+resource "tls_private_key" "first_ssh_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "tls_private_key" "second_ssh_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "tls_private_key" "ed25519_ssh_key" {
+  algorithm = "ED25519"
+}
+
+resource "random_password" "admin_password" {
+  length           = 20
+  special          = true
+  override_special = "!@#$%^&*()-_=+[]{}<>:?"
+  min_lower        = 1
+  min_upper        = 1
+  min_numeric      = 1
+  min_special      = 1
 }
 
 locals {
