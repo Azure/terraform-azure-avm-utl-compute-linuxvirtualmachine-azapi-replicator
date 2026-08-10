@@ -73,8 +73,8 @@ resource "random_password" "admin_password" {
 }
 
 locals {
-  vm_name   = "acctestvm${random_string.name.result}"
-  first_public_key   = tls_private_key.first_ssh_key.public_key_openssh
+  vm_name          = "acctestvm${random_string.name.result}"
+  first_public_key = tls_private_key.first_ssh_key.public_key_openssh
 }
 
 resource "azurerm_resource_group" "test" {

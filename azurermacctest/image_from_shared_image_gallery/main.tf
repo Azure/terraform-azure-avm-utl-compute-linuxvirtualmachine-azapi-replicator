@@ -38,8 +38,8 @@ provider "random" {}
 provider "tls" {}
 
 locals {
-  first_public_key   = tls_private_key.first_ssh_key.public_key_openssh
-  second_public_key  = tls_private_key.second_ssh_key.public_key_openssh
+  first_public_key  = tls_private_key.first_ssh_key.public_key_openssh
+  second_public_key = tls_private_key.second_ssh_key.public_key_openssh
   vm_name           = "acctestsourcevm-${random_integer.number.result}"
   admin_username    = "testadmin${random_integer.number.result}"
   admin_password    = local.admin_password
