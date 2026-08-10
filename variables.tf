@@ -176,9 +176,9 @@ EOT
 
 variable "admin_password" {
   type        = string
-  ephemeral   = true
   default     = null
   description = "(Optional) The Password which should be used for the local-administrator on this Virtual Machine. Changing this forces a new resource to be created."
+  ephemeral   = true
 
   validation {
     condition     = var.admin_password == null || (length(var.admin_password) >= 6 && length(var.admin_password) <= 72)
@@ -330,9 +330,9 @@ variable "computer_name" {
 
 variable "custom_data" {
   type        = string
-  ephemeral   = true
   default     = null
   description = "(Optional) The Base64-Encoded Custom Data which should be used for this Virtual Machine. Changing this forces a new resource to be created."
+  ephemeral   = true
 
   validation {
     condition     = var.custom_data == null || can(base64decode(var.custom_data))

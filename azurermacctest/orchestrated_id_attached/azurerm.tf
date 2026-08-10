@@ -1,10 +1,10 @@
 resource "azurerm_linux_virtual_machine" "test" {
-  name                            = local.vm_name
-  resource_group_name             = azurerm_resource_group.test.name
-  location                        = azurerm_resource_group.test.location
-  size                            = "Standard_F2"
-  admin_username                  = "adminuser"
-  virtual_machine_scale_set_id    = azurerm_orchestrated_virtual_machine_scale_set.test.id
+  name                         = local.vm_name
+  resource_group_name          = azurerm_resource_group.test.name
+  location                     = azurerm_resource_group.test.location
+  size                         = "Standard_F2"
+  admin_username               = "adminuser"
+  virtual_machine_scale_set_id = azurerm_orchestrated_virtual_machine_scale_set.test.id
   network_interface_ids = [
     azurerm_network_interface.test.id,
   ]

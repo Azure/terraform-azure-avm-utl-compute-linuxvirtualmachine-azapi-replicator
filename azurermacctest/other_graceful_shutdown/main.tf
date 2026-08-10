@@ -42,9 +42,9 @@ provider "random" {}
 provider "tls" {}
 
 locals {
-  first_public_key   = tls_private_key.first_ssh_key.public_key_openssh
-  second_public_key  = tls_private_key.second_ssh_key.public_key_openssh
-  admin_password     = random_password.admin_password.result
+  first_public_key  = tls_private_key.first_ssh_key.public_key_openssh
+  second_public_key = tls_private_key.second_ssh_key.public_key_openssh
+  admin_password    = random_password.admin_password.result
 }
 
 resource "random_integer" "number" {

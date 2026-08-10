@@ -73,9 +73,9 @@ resource "random_password" "admin_password" {
 }
 
 locals {
-  first_public_key   = tls_private_key.first_ssh_key.public_key_openssh
-  second_public_key  = tls_private_key.second_ssh_key.public_key_openssh
-  admin_password     = random_password.admin_password.result
+  first_public_key  = tls_private_key.first_ssh_key.public_key_openssh
+  second_public_key = tls_private_key.second_ssh_key.public_key_openssh
+  admin_password    = random_password.admin_password.result
 }
 
 data "azurerm_client_config" "current" {}

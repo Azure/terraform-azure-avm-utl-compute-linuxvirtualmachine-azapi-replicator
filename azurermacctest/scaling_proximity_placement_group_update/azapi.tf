@@ -1,11 +1,11 @@
 module "replicator" {
-  source                       = "../../"
-  name                         = "acctestVM-${random_integer.number.result}"
-  resource_group_id            = azurerm_resource_group.test.id
-  resource_group_name          = azurerm_resource_group.test.name
-  location                     = azurerm_resource_group.test.location
-  size                         = "Standard_F2"
-  admin_username               = "adminuser"
+  source              = "../../"
+  name                = "acctestVM-${random_integer.number.result}"
+  resource_group_id   = azurerm_resource_group.test.id
+  resource_group_name = azurerm_resource_group.test.name
+  location            = azurerm_resource_group.test.location
+  size                = "Standard_F2"
+  admin_username      = "adminuser"
   network_interface_ids = [
     azurerm_network_interface.test.id,
   ]
